@@ -7,11 +7,15 @@ from supabase import create_client, Client
 # 0. System Functions & Database Connection
 # ---------------------------------------------------------
 def init_connection():
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_KEY")
-    if not url or not key:
+    # 環境変数から取得（エラー回避のためtry-except）
+    try:
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_KEY")
+        if not url or not key:
+            return None
+        return create_client(url, key)
+    except:
         return None
-    return create_client(url, key)
 
 supabase = init_connection()
 
@@ -48,33 +52,71 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (Stealth & Luxury)
+# 2. Design (ここが修正ポイント！)
 # ---------------------------------------------------------
+# CSSを確実に適用させるために、書き方を少し整理しました
 st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
     <style>
+    /* 全体の設定 */
     .stApp { background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; color: #e0e0e0; font-family: 'Lato', sans-serif; }
     h1, h2, h3 { font-family: 'Cinzel', serif !important; color: #D4AF37 !important; text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
+    
+    /* 余計なものを隠す */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
     
+    /* 入力フォームのデザイン */
     .stTextInput input {
-        background: transparent !important; border: none !important; border-bottom: 1px solid #555 !important;
-        color: #fff !important; text-align: center; font-family: 'Cinzel', serif; letter-spacing: 0.1em;
+        background: transparent !important; 
+        border: none !important; 
+        border-bottom: 1px solid #555 !important;
+        color: #fff !important; 
+        text-align: center; 
+        font-family: 'Cinzel', serif; 
+        letter-spacing: 0.1em;
     }
     .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; }
     
+    /* ボタンのデザイン */
     .stButton button {
-        background: transparent !important; border: 1px solid #D4AF37 !important; color: #D4AF37 !important;
-        font-family: 'Cinzel', serif !important; letter-spacing: 0.2em; width: 100%; transition: 0.3s;
+        background: transparent !important; 
+        border: 1px solid #D4AF37 !important; 
+        color: #D4AF37 !important;
+        font-family: 'Cinzel', serif !important; 
+        letter-spacing: 0.2em; 
+        width: 100%; 
+        transition: 0.3s;
     }
     .stButton button:hover { background: #D4AF37 !important; color: #000 !important; }
     
-    /* Logo Style */
-    .logo-text { font-size: clamp(2rem, 8vw, 3.5rem); text-align: center; background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); -webkit-background-clip: text; color: transparent; font-family: 'Cinzel', serif; font-weight: 800; white-space: nowrap; }
-    .sub-logo { text-align: center; color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; }
+    /* ロゴのデザイン */
+    .logo-text { 
+        font-size: clamp(2rem, 8vw, 3.5rem); 
+        text-align: center; 
+        background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); 
+        -webkit-background-clip: text; 
+        color: transparent; 
+        font-family: 'Cinzel', serif; 
+        font-weight: 800; 
+        white-space: nowrap; 
+    }
+    .sub-logo { 
+        text-align: center; 
+        color: #888; 
+        letter-spacing: 0.4em; 
+        font-size: 0.8rem; 
+        margin-bottom: 3rem; 
+        text-transform: uppercase; 
+    }
     
-    /* Glass Container */
-    .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.2); padding: 30px; border-radius: 2px; }
+    /* ガラス風ボックス */
+    .glass-box { 
+        background: rgba(255,255,255,0.03); 
+        backdrop-filter: blur(10px); 
+        border: 1px solid rgba(212,175,55,0.2); 
+        padding: 30px; 
+        border-radius: 2px; 
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -89,8 +131,9 @@ if 'user' not in st.session_state:
 
 # --- AUTHENTICATION AREA ---
 if not st.session_state.user:
+    # データベース未接続の場合の安全策
     if not supabase:
-        st.error("System Configuration Error: Database not connected.")
+        st.error("System Error: Database Connection Failed. Please check Render Environment Variables.")
         st.stop()
         
     tab1, tab2 = st.tabs(["LOGIN", "REGISTER"])
@@ -107,7 +150,6 @@ if not st.session_state.user:
                 
                 if btn:
                     try:
-                        # データベース検索
                         res = supabase.table('users').select("*").eq('username', username).eq('password', password).execute()
                         if len(res.data) > 0:
                             user_data = res.data[0]
@@ -121,7 +163,7 @@ if not st.session_state.user:
                         else:
                             st.error("Invalid credentials.")
                     except Exception as e:
-                        st.error(f"Error: {e}")
+                        st.error(f"Login Error: {e}")
 
     # REGISTER TAB
     with tab2:
@@ -141,7 +183,6 @@ if not st.session_state.user:
                             if len(check.data) > 0:
                                 st.error("Username already taken.")
                             else:
-                                # 新規登録（承認待ち）
                                 supabase.table('users').insert({
                                     "username": new_user,
                                     "password": new_pass,
@@ -150,7 +191,7 @@ if not st.session_state.user:
                                 }).execute()
                                 st.success("Application sent! Please wait for approval.")
                         except Exception as e:
-                            st.error(f"Error: {e}")
+                            st.error(f"Register Error: {e}")
                     else:
                         st.warning("Please fill all fields.")
 
@@ -158,27 +199,28 @@ if not st.session_state.user:
 else:
     user = st.session_state.user
     
-    # --- ADMIN PANEL (Only for Admin) ---
+    # --- ADMIN PANEL ---
     if user['role'] == 'admin':
         with st.expander("ADMIN DASHBOARD (Manage Users)"):
             st.write("### Pending Approvals")
-            # 承認待ちユーザーを取得
-            pending_users = supabase.table('users').select("*").eq('status', 'pending').execute().data
-            
-            if pending_users:
-                for p_user in pending_users:
-                    c1, c2, c3 = st.columns([2, 1, 1])
-                    c1.write(f"USER: **{p_user['username']}**")
-                    if c2.button("APPROVE", key=f"app_{p_user['id']}"):
-                        supabase.table('users').update({"status": "approved"}).eq("id", p_user['id']).execute()
-                        st.success(f"Approved {p_user['username']}")
-                        safe_rerun()
-                    if c3.button("REJECT", key=f"rej_{p_user['id']}"):
-                        supabase.table('users').delete().eq("id", p_user['id']).execute()
-                        st.warning(f"Rejected {p_user['username']}")
-                        safe_rerun()
-            else:
-                st.caption("No pending applications.")
+            try:
+                pending_users = supabase.table('users').select("*").eq('status', 'pending').execute().data
+                if pending_users:
+                    for p_user in pending_users:
+                        c1, c2, c3 = st.columns([2, 1, 1])
+                        c1.write(f"USER: **{p_user['username']}**")
+                        if c2.button("APPROVE", key=f"app_{p_user['id']}"):
+                            supabase.table('users').update({"status": "approved"}).eq("id", p_user['id']).execute()
+                            st.success(f"Approved {p_user['username']}")
+                            safe_rerun()
+                        if c3.button("REJECT", key=f"rej_{p_user['id']}"):
+                            supabase.table('users').delete().eq("id", p_user['id']).execute()
+                            st.warning(f"Rejected {p_user['username']}")
+                            safe_rerun()
+                else:
+                    st.caption("No pending applications.")
+            except:
+                st.error("Admin Panel Error")
     
     # --- PREDICTION DATA ---
     df = None
