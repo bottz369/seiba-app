@@ -15,6 +15,7 @@ def safe_rerun():
             st.error("画面を更新してください")
 
 def load_data(file_path):
+    """GitHub上のデータを読み込む関数"""
     df = None
     encodings = ['utf-8', 'cp932', 'shift_jis']
     for enc in encodings:
@@ -28,23 +29,30 @@ def load_data(file_path):
     return df
 
 # ---------------------------------------------------------
-# 1. ページ設定
+# 1. ページ設定（Horsemen仕様）
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="聖馬AI", # タイトルもシンプルに
+    page_title="Horsemen - Premium Prediction", # タブ名も変更
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
 # ---------------------------------------------------------
-# 2. デザイン設定（最終手段）
+# 2. デザイン設定（ステルスモード維持）
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-    /* ベースカラー強制適用 */
+    /* 全体の配色（黒×金） */
     .stApp { background-color: #050505 !important; color: #D4AF37 !important; }
-    
-    /* ヘッダー・フッター・メニュー・ツールバーを「存在しないもの」として処理 */
+    h1, h2, h3, h4, h5 { font-family: serif !important; color: #D4AF37 !important; }
+    .stDataFrame { border: 1px solid #333; }
+
+    /* --- NUCLEAR STEALTH MODE (徹底消去) --- */
     header, footer, #MainMenu, [data-testid="stToolbar"], [data-testid="stHeader"], [data-testid="stDecoration"], [data-testid="stStatusWidget"] {
         visibility: hidden !important;
         display: none !important;
@@ -53,20 +61,14 @@ st.markdown("""
         opacity: 0 !important;
         pointer-events: none !important;
     }
-    
-    /* 右下のボタン（Manage app / Fork this app）を強制非表示 */
-    .stDeployButton, div[class*="stDeployButton"] {
+    .stDeployButton, div[class*="stDeployButton"], .viewerBadge_container__1QSob {
         display: none !important;
         visibility: hidden !important;
     }
-    /* ビューワーバッジ（右上のRunningなど）も消す */
-    .viewerBadge_container__1QSob {
-        display: none !important;
-    }
-
-    /* 上部の余白を完全に削除 */
+    
+    /* レイアウト調整 */
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 2rem !important;
         padding-bottom: 5rem !important;
     }
     
@@ -79,10 +81,10 @@ st.markdown("""
 # 3. アプリケーション本体
 # ---------------------------------------------------------
 
-# タイトル（スペースを開ける）
+# タイトル（Horsemenロゴ風）
 st.markdown("<br>", unsafe_allow_html=True)
-st.title("聖馬AI")
-st.markdown("##### The Art of Prediction - 究極の競馬予測")
+st.title("Horsemen")
+st.markdown("##### The Art of Prediction")
 st.markdown("---")
 
 # ログイン管理
@@ -94,15 +96,16 @@ if not st.session_state.logged_in:
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
         with st.form(key='login_form'):
-            st.write("会員パスワードを入力してください")
+            st.write("Enter Password") # 英語表記でクールに
             password = st.text_input("Member Password", type="password")
             if st.form_submit_button("ENTER"):
-                if password == "seiba2025":
+                if password == "seiba2025": # パスワードはそのまま（変更可）
                     st.session_state.logged_in = True
                     safe_rerun()
                 else:
-                    st.error("パスワードが違います")
+                    st.error("Invalid Password")
 else:
+    # ログイン後
     df = None
     if os.path.exists('data.csv'):
         df = load_data('data.csv')
@@ -112,12 +115,12 @@ else:
             locations = df['場所'].unique()
             col1, col2 = st.columns(2)
             with col1:
-                selected_location = st.selectbox("開催場所", locations)
+                selected_location = st.selectbox("LOCATION", locations) # 英語ラベル
             
             df_loc = df[df['場所'] == selected_location]
             races = sorted(df_loc['R'].unique())
             with col2:
-                selected_race = st.selectbox("レース", races, format_func=lambda x: f"{x}R")
+                selected_race = st.selectbox("RACE", races, format_func=lambda x: f"{x}R") # 英語ラベル
             
             df_display = df_loc[df_loc['R'] == selected_race].copy()
             race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
@@ -133,9 +136,9 @@ else:
             st.dataframe(df_display[show_cols], use_container_width=True, hide_index=True)
             
         except Exception as e:
-            st.error(f"データ表示エラー: {e}")
+            st.error(f"Error: {e}")
     else:
-        st.info("現在、最新の予測データを準備中です。")
+        st.info("Data is being updated. Please wait.")
     
     st.markdown("---")
     if st.button("LOGOUT"):
