@@ -51,28 +51,60 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS)
+# 2. Design (CSS) - 枠線修正版
 # ---------------------------------------------------------
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
+    /* 全体設定 */
     .stApp { background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; color: #e0e0e0; font-family: 'Lato', sans-serif; }
     h1, h2, h3 { font-family: 'Cinzel', serif !important; color: #D4AF37 !important; text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
+    
+    /* 不要な要素の削除 */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
-    .stTextInput input {
-        background: transparent !important; border: none !important; border-bottom: 1px solid #555 !important;
-        color: #fff !important; text-align: center; font-family: 'Cinzel', serif; letter-spacing: 0.1em;
+    
+    /* --- フィルタの枠線と背景を消す（修正の肝） --- */
+    /* Selectboxの外側のコンテナ */
+    div[data-testid="stSelectbox"], 
+    div[data-testid="stSelectbox"] > div[data-baseweb="select"],
+    div[data-testid="stTextInput"] {
+        border: none !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        padding: 0px !important;
+    }
+    
+    /* 入力フォームの実際のフィールド */
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
+        background: transparent !important; 
+        border: none !important; 
+        border-bottom: 1px solid #555 !important;
+        color: #fff !important; 
+        text-align: center; 
+        font-family: 'Cinzel', serif; 
+        letter-spacing: 0.1em;
         text-transform: none !important; 
+        border-radius: 0px !important;
     }
     .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; }
+    
+    /* ボタン設定 */
     .stButton button {
         background: transparent !important; border: 1px solid #D4AF37 !important; color: #D4AF37 !important;
         font-family: 'Cinzel', serif !important; letter-spacing: 0.2em; width: 100%; transition: 0.3s; border-radius: 0px !important;
     }
     .stButton button:hover { background: #D4AF37 !important; color: #000 !important; }
+    
+    /* ロゴ設定 */
     .logo-text { font-size: clamp(2rem, 8vw, 3.5rem); text-align: center; background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); -webkit-background-clip: text; color: transparent; font-family: 'Cinzel', serif; font-weight: 800; white-space: nowrap; }
     .sub-logo { text-align: center; color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; }
+    
+    /* ガラス効果 */
     .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.2); padding: 30px; border-radius: 2px; }
+    
+    /* レイアウト調整 */
+    .block-container { padding-top: 3rem !important; padding-bottom: 5rem !important; max-width: 1000px !important; }
+
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -94,7 +126,7 @@ if not st.session_state.user:
         
     tab1, tab2 = st.tabs(["LOGIN", "REGISTER"])
     
-    # LOGIN (unchanged)
+    # LOGIN
     with tab1:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -124,7 +156,7 @@ if not st.session_state.user:
                     else:
                         st.error("Please enter both username and password.")
 
-    # REGISTER (unchanged)
+    # REGISTER
     with tab2:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -157,7 +189,7 @@ if not st.session_state.user:
 else:
     user = st.session_state.user
     
-    # --- ADMIN PANEL (unchanged) ---
+    # --- ADMIN PANEL ---
     if user['role'] == 'admin':
         with st.expander("ADMIN DASHBOARD (Member Management)", expanded=False):
             st.write("##### ⚠️ Pending Requests")
@@ -199,7 +231,7 @@ else:
                 else:
                     st.info("No active members.")
             except:
-                pass
+                st.error("Error fetching active members.")
 
     # --- DATA DISPLAY ---
     df = None
@@ -208,26 +240,25 @@ else:
     
     if df is not None:
         try:
-            # --- ここから修正：データが存在するかチェック ---
+            # --- START FILTER BOX ---
             st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
             f_col1, f_col2 = st.columns(2)
             
-            # 1. Selectboxes の設定
             locations = df['場所'].unique()
             selected_location = f_col1.selectbox("LOCATION", locations)
             df_loc = df[df['場所'] == selected_location]
             races = sorted(df_loc['R'].unique())
             selected_race = f_col2.selectbox("RACE", races, format_func=lambda x: f"{x}R")
-            
-            # 2. フィルタリング後のデータ
-            df_display = df_loc[df_loc['R'] == selected_race].copy()
             st.markdown("</div>", unsafe_allow_html=True)
+            # --- END FILTER BOX ---
+
+            df_display = df_loc[df_loc['R'] == selected_race].copy()
             
-            # 3. ★修正ポイント：データがあるかチェック！
+            # --- DATA CHECK ---
             if df_display.empty:
                 st.info(f"{selected_location} {selected_race}R のデータは現在用意されていません。")
             else:
-                # 4. データがある場合のみ、表示ロジックを実行
+                # --- DISPLAY LOGIC ---
                 race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
                 
                 st.markdown(f"""
