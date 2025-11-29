@@ -51,41 +51,119 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS)
+# 2. Design (CSS) - 修正・強化版
 # ---------------------------------------------------------
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
-    /* 全体設定 */
-    .stApp { background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; color: #e0e0e0; font-family: 'Lato', sans-serif; }
-    h1, h2, h3 { font-family: 'Cinzel', serif !important; color: #D4AF37 !important; text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
+    /* --- 全体設定 --- */
+    .stApp { 
+        background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; 
+        color: #e0e0e0; 
+        font-family: 'Lato', sans-serif; 
+    }
+    h1, h2, h3, h4, h5 { 
+        font-family: 'Cinzel', serif !important; 
+        color: #D4AF37 !important; 
+        text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); 
+    }
     
-    /* 不要な要素の削除 */
+    /* --- 不要な要素の完全削除 --- */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
     
-    /* フォーム設定 */
-    .stTextInput input {
-        background: transparent !important; border: none !important; border-bottom: 1px solid #555 !important;
-        color: #fff !important; text-align: center; font-family: 'Cinzel', serif; letter-spacing: 0.1em;
+    /* --- 入力フォーム (ログイン・登録・CSV選択) --- */
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
+        background: transparent !important; 
+        border: none !important; 
+        border-bottom: 1px solid #555 !important;
+        color: #fff !important; 
+        text-align: center; 
+        font-family: 'Cinzel', serif; 
+        letter-spacing: 0.1em;
+        border-radius: 0px !important;
     }
-    .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; }
+    .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; box-shadow: none !important; }
     
-    /* ボタン設定 */
+    /* --- ボタン --- */
     .stButton button {
-        background: transparent !important; border: 1px solid #D4AF37 !important; color: #D4AF37 !important;
-        font-family: 'Cinzel', serif !important; letter-spacing: 0.2em; width: 100%; transition: 0.3s;
+        background: transparent !important; 
+        border: 1px solid #D4AF37 !important; 
+        color: #D4AF37 !important;
+        font-family: 'Cinzel', serif !important; 
+        letter-spacing: 0.2em; 
+        width: 100%; 
+        transition: 0.3s;
+        border-radius: 0px !important;
     }
-    .stButton button:hover { background: #D4AF37 !important; color: #000 !important; }
+    .stButton button:hover { 
+        background: #D4AF37 !important; 
+        color: #000 !important; 
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+    }
     
-    /* ロゴ設定 */
+    /* --- ロゴ (スマホ対応) --- */
     .logo-text { 
-        font-size: clamp(2rem, 8vw, 3.5rem); text-align: center; background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); 
-        -webkit-background-clip: text; color: transparent; font-family: 'Cinzel', serif; font-weight: 800; white-space: nowrap; 
+        font-size: clamp(2rem, 8vw, 3.5rem); 
+        text-align: center; 
+        background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); 
+        -webkit-background-clip: text; 
+        color: transparent; 
+        font-family: 'Cinzel', serif; 
+        font-weight: 800; 
+        white-space: nowrap; /* 改行禁止 */
     }
-    .sub-logo { text-align: center; color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; }
+    .sub-logo { 
+        text-align: center; 
+        color: #888; 
+        letter-spacing: 0.4em; 
+        font-size: 0.8rem; 
+        margin-bottom: 3rem; 
+        text-transform: uppercase; 
+    }
     
-    /* ガラス効果 */
-    .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.2); padding: 30px; border-radius: 2px; }
+    /* --- ガラス効果ボックス --- */
+    .glass-box { 
+        background: rgba(255,255,255,0.03); 
+        backdrop-filter: blur(10px); 
+        border: 1px solid rgba(212,175,55,0.2); 
+        padding: 30px; 
+        border-radius: 2px; 
+        margin-bottom: 20px;
+    }
+    
+    /* --- 管理画面 (Expander) のカスタマイズ --- */
+    .streamlit-expanderHeader {
+        background-color: rgba(255,255,255,0.05) !important;
+        color: #D4AF37 !important;
+        font-family: 'Cinzel', serif !important;
+        border: 1px solid #333 !important;
+        border-radius: 0px !important;
+    }
+    .streamlit-expanderContent {
+        background-color: rgba(0,0,0,0.5) !important;
+        border: 1px solid #333 !important;
+        border-top: none !important;
+        color: #ddd !important;
+    }
+    
+    /* --- タブのデザイン修正 --- */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: transparent;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: transparent;
+        border-radius: 0px;
+        color: #888;
+        font-family: 'Cinzel', serif;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: transparent;
+        color: #D4AF37;
+        border-bottom: 2px solid #D4AF37;
+    }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -132,7 +210,7 @@ if not st.session_state.user:
                         else:
                             st.error("Invalid credentials.")
                     except:
-                        st.error("Login failed. Please try again.")
+                        st.error("Login failed.")
 
     # REGISTER
     with tab2:
@@ -167,17 +245,16 @@ if not st.session_state.user:
 else:
     user = st.session_state.user
     
-    # --- ADMIN PANEL (強化版) ---
+    # --- ADMIN PANEL ---
     if user['role'] == 'admin':
-        with st.expander("ADMIN DASHBOARD (Member Management)", expanded=True):
-            # 1. 承認待ちリスト
+        with st.expander("ADMIN DASHBOARD (Member Management)", expanded=False):
             st.write("##### ⚠️ Pending Requests")
             try:
                 pending_users = supabase.table('users').select("*").eq('status', 'pending').execute().data
                 if pending_users:
                     for p_user in pending_users:
                         c1, c2, c3 = st.columns([2, 1, 1])
-                        c1.info(f"New User: **{p_user['username']}**")
+                        c1.info(f"User: {p_user['username']}")
                         if c2.button("APPROVE", key=f"app_{p_user['id']}"):
                             supabase.table('users').update({"status": "approved"}).eq("id", p_user['id']).execute()
                             safe_rerun()
@@ -187,35 +264,30 @@ else:
                 else:
                     st.caption("No pending requests.")
             except:
-                st.error("Error fetching pending users.")
+                st.error("Error fetching data.")
             
             st.markdown("---")
             
-            # 2. 会員一覧リスト
             st.write("##### 👥 Active Members")
             try:
-                # admin以外のアクティブユーザーを取得
                 active_users = supabase.table('users').select("*").eq('status', 'approved').neq('role', 'admin').execute().data
                 if active_users:
-                    # 見やすくテーブル形式風に表示
                     for a_user in active_users:
                         col_u, col_p, col_btn = st.columns([2, 2, 1])
                         with col_u:
                             st.write(f"👤 **{a_user['username']}**")
                         with col_p:
-                            # パスワードは伏字またはそのまま表示（管理用なので表示）
                             st.caption(f"Pass: {a_user['password']}")
                         with col_btn:
-                            # 削除ボタン（赤くはできませんが警告付きで）
                             if st.button("REMOVE", key=f"del_{a_user['id']}"):
                                 supabase.table('users').delete().eq("id", a_user['id']).execute()
                                 st.warning(f"Removed {a_user['username']}")
                                 safe_rerun()
-                        st.divider() # 線で区切る
+                        st.divider()
                 else:
-                    st.info("No active members yet.")
+                    st.info("No active members.")
             except:
-                st.error("Error fetching active members.")
+                pass
 
     # --- DATA DISPLAY ---
     df = None
