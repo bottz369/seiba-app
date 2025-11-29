@@ -51,8 +51,31 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS) - キーボードブロック最終版
+# 2. Design (CSS & JS Injection) - キーボードブロック最終版
 # ---------------------------------------------------------
+
+# JavaScript: キーボードの立ち上がりをブロックする
+# CSSだけでは消せない 'readonly' 属性を強制的に付与します。
+st.markdown("""
+<script>
+    function fixSelectKeyboard() {
+        // すべてのセレクトボックス内の入力欄を取得
+        const inputElements = document.querySelectorAll('div[data-baseweb="select"] input[type="text"]');
+        inputElements.forEach(input => {
+            // ★キーボード表示をブロックする命令★
+            input.setAttribute('readonly', 'true'); 
+            input.setAttribute('inputmode', 'none'); 
+            input.style.cursor = 'default';
+        });
+    }
+    // ページ読み込み完了後に実行
+    window.onload = function() {
+        setTimeout(fixSelectKeyboard, 500); 
+    };
+</script>
+""", unsafe_allow_html=True)
+
+
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:wght@400;500;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -66,15 +89,8 @@ custom_css = """
     /* ガラス効果 */
     .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); border: none !important; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
     
-    /* --- ★キーボードブロックの最重要修正★ --- */
-    div[data-baseweb="select"] input[type="text"] {
-        /* クリックイベントを無効化し、下のボタンにクリックを渡す */
-        pointer-events: none !important; 
-        /* カーソルを非表示 */
-        caret-color: transparent !important;
-    }
-    
-    /* 入力フォームの実際のフィールド */
+    /* 入力フォーム設定 */
+    div[data-testid*="stSelectbox"], div[data-testid*="stTextInput"] { border: none !important; background-color: transparent !important; }
     .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
         background: transparent !important; border: none !important; border-bottom: 1px solid #777 !important;
         color: #fff !important; text-align: center; font-family: 'Lato', sans-serif; text-transform: none !important; 
@@ -82,11 +98,15 @@ custom_css = """
     .stTextInput input:focus { border-bottom: 1px solid #E0C582 !important; }
 
     /* ロゴとサブタイトルの中央寄せ */
-    .logo-text { font-size: clamp(2rem, 8vw, 3.5rem); text-align: center !important; margin: 0 auto !important;
+    .logo-text { 
+        font-size: clamp(2rem, 8vw, 3.5rem); text-align: center !important; margin: 0 auto !important;
         background: linear-gradient(to right, #E0C582, #fcf6ba, #E0C582); -webkit-background-clip: text; color: transparent; 
         font-family: 'Playfair Display', serif; font-weight: 800; white-space: nowrap; 
     }
-    .sub-logo { text-align: center !important; margin: 0 auto !important; width: 100% !important; color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; }
+    .sub-logo { 
+        text-align: center !important; margin: 0 auto !important; width: 100% !important; 
+        color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; 
+    }
     
     /* その他設定 */
     .stDataFrame table { border: none !important; }
