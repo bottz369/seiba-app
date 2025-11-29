@@ -51,28 +51,41 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS) - サブタイトル中央寄せ修正
+# 2. Design (CSS & JS Injection) - 最終修正
 # ---------------------------------------------------------
+
+# JavaScript: キーボードの立ち上がりをブロックする
+st.markdown("""
+<script>
+    function fix_select_keyboard() {
+        const inputElements = document.querySelectorAll('div[data-baseweb="select"] input');
+        inputElements.forEach(input => {
+            // 入力フィールドを読み取り専用に設定し、キーボードの立ち上がりをブロック
+            input.setAttribute('readonly', 'readonly');
+            input.setAttribute('inputmode', 'none'); 
+            input.style.caretColor = 'transparent'; // カーソルを消す
+        });
+    }
+    // コンポーネントの読み込みを待って実行
+    setTimeout(fix_select_keyboard, 500); 
+</script>
+""", unsafe_allow_html=True)
+
+
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:wght@400;500;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
-    /* --- 全体設定 --- */
+    /* 全体設定 */
     .stApp { background: radial-gradient(circle at 50% 30%, #111133 0%, #000000 100%) !important; color: #E0C582; font-family: 'Lato', sans-serif; }
-    h1, h2, h3, h4, h5 { 
-        font-family: 'Playfair Display', serif !important; font-weight: 500 !important; letter-spacing: 0.15em !important;
-        color: #E0C582 !important; text-shadow: 0 4px 15px rgba(224, 197, 130, 0.4); 
-    }
+    h1, h2, h3, h4, h5 { font-family: 'Playfair Display', serif !important; font-weight: 500 !important; letter-spacing: 0.15em !important; color: #E0C582 !important; text-shadow: 0 4px 15px rgba(224, 197, 130, 0.4); }
     
     /* 不要な要素の削除 */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
     
     /* ガラス効果 */
-    .glass-box { 
-        background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); border: none !important; 
-        box-shadow: 0 0 40px rgba(0,0,0,0.8);
-    }
+    .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); border: none !important; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
     
-    /* --- 入力フォーム設定 --- */
+    /* 入力フォーム設定 */
     div[data-testid*="stSelectbox"], div[data-testid*="stTextInput"] { border: none !important; background-color: transparent !important; }
     .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
         background: transparent !important; border: none !important; border-bottom: 1px solid #777 !important;
@@ -80,16 +93,14 @@ custom_css = """
     }
     .stTextInput input:focus { border-bottom: 1px solid #E0C582 !important; }
 
-    /* --- ロゴとサブタイトルの中央寄せ FIX --- */
+    /* ロゴ (中央寄せ修正済み) */
     .logo-text { 
         font-size: clamp(2rem, 8vw, 3.5rem); text-align: center !important; margin: 0 auto !important;
         background: linear-gradient(to right, #E0C582, #fcf6ba, #E0C582); -webkit-background-clip: text; color: transparent; 
         font-family: 'Playfair Display', serif; font-weight: 800; white-space: nowrap; 
     }
     .sub-logo { 
-        text-align: center !important; /* 中央寄せ強化 */
-        margin: 0 auto !important; /* ← ★ブロック要素の中央寄せ★ */
-        width: 100% !important; /* 幅を確保 */
+        text-align: center !important; margin: 0 auto !important; width: 100% !important; 
         color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; 
     }
     
@@ -252,7 +263,6 @@ else:
                 # --- DISPLAY LOGIC ---
                 race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
                 
-                # レースタイトル（仕切り線なし）
                 st.markdown(f"""
                     <div class="race-title-separator" style="text-align: center; margin: 30px 0; padding: 15px;">
                         <span style="font-family: 'Playfair Display'; font-weight: 500; font-size: 1.5rem; color: #fff;">{selected_location} {selected_race}R</span><br>
