@@ -4,7 +4,7 @@ import os
 from supabase import create_client, Client
 
 # ---------------------------------------------------------
-# 0. System Functions & Database Connection
+# 0. System Functions
 # ---------------------------------------------------------
 def init_connection():
     try:
@@ -51,49 +51,27 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS) - UIバグ修正済み
+# 2. Design (CSS)
 # ---------------------------------------------------------
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
-    /* 全体設定 */
     .stApp { background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; color: #e0e0e0; font-family: 'Lato', sans-serif; }
     h1, h2, h3 { font-family: 'Cinzel', serif !important; color: #D4AF37 !important; text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
-    
-    /* 不要な要素の削除 */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
-    
-    /* フォーム設定 - ★ここを修正★ */
     .stTextInput input {
-        background: transparent !important; 
-        border: none !important; 
-        border-bottom: 1px solid #555 !important;
-        color: #fff !important; 
-        text-align: center; 
-        font-family: 'Cinzel', serif; 
-        letter-spacing: 0.1em;
-        text-transform: none !important; /* ← 大文字変換を無効化 */
+        background: transparent !important; border: none !important; border-bottom: 1px solid #555 !important;
+        color: #fff !important; text-align: center; font-family: 'Cinzel', serif; letter-spacing: 0.1em;
+        text-transform: none !important; 
     }
     .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; }
-    
-    /* ボタン設定 */
     .stButton button {
-        background: transparent !important; 
-        border: 1px solid #D4AF37 !important; 
-        color: #D4AF37 !important;
-        font-family: 'Cinzel', serif !important; 
-        letter-spacing: 0.2em; 
-        width: 100%; 
-        transition: 0.3s;
-        border-radius: 0px !important;
+        background: transparent !important; border: 1px solid #D4AF37 !important; color: #D4AF37 !important;
+        font-family: 'Cinzel', serif !important; letter-spacing: 0.2em; width: 100%; transition: 0.3s; border-radius: 0px !important;
     }
     .stButton button:hover { background: #D4AF37 !important; color: #000 !important; }
-    
-    /* ロゴ設定 */
     .logo-text { font-size: clamp(2rem, 8vw, 3.5rem); text-align: center; background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); -webkit-background-clip: text; color: transparent; font-family: 'Cinzel', serif; font-weight: 800; white-space: nowrap; }
     .sub-logo { text-align: center; color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; }
-    
-    /* ガラス効果 */
     .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.2); padding: 30px; border-radius: 2px; }
 </style>
 """
@@ -111,12 +89,12 @@ if 'user' not in st.session_state:
 # --- AUTHENTICATION ---
 if not st.session_state.user:
     if not supabase:
-        st.warning("System Error: Database Connection Failed.")
+        st.warning("Maintenance Mode: Database connecting...")
         st.stop()
         
     tab1, tab2 = st.tabs(["LOGIN", "REGISTER"])
     
-    # LOGIN TAB (二度打ちバグ修正済み)
+    # LOGIN (unchanged)
     with tab1:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -127,8 +105,7 @@ if not st.session_state.user:
                 btn = st.form_submit_button("ENTER")
                 
                 if btn:
-                    # ★修正ポイント：入力値が空でないかを先に厳密にチェック★
-                    if username and password: 
+                    if username and password:
                         try:
                             res = supabase.table('users').select("*").eq('username', username).eq('password', password).execute()
                             if len(res.data) > 0:
@@ -147,8 +124,7 @@ if not st.session_state.user:
                     else:
                         st.error("Please enter both username and password.")
 
-
-    # REGISTER TAB (二度打ちバグ修正済み)
+    # REGISTER (unchanged)
     with tab2:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -159,7 +135,6 @@ if not st.session_state.user:
                 reg_btn = st.form_submit_button("APPLY")
                 
                 if reg_btn:
-                    # ★修正ポイント：入力値が空でないかを先に厳密にチェック★
                     if new_user and new_pass:
                         try:
                             check = supabase.table('users').select("*").eq('username', new_user).execute()
@@ -182,7 +157,7 @@ if not st.session_state.user:
 else:
     user = st.session_state.user
     
-    # --- ADMIN PANEL ---
+    # --- ADMIN PANEL (unchanged) ---
     if user['role'] == 'admin':
         with st.expander("ADMIN DASHBOARD (Member Management)", expanded=False):
             st.write("##### ⚠️ Pending Requests")
@@ -233,35 +208,45 @@ else:
     
     if df is not None:
         try:
+            # --- ここから修正：データが存在するかチェック ---
             st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
             f_col1, f_col2 = st.columns(2)
+            
+            # 1. Selectboxes の設定
             locations = df['場所'].unique()
             selected_location = f_col1.selectbox("LOCATION", locations)
-            
             df_loc = df[df['場所'] == selected_location]
             races = sorted(df_loc['R'].unique())
             selected_race = f_col2.selectbox("RACE", races, format_func=lambda x: f"{x}R")
+            
+            # 2. フィルタリング後のデータ
+            df_display = df_loc[df_loc['R'] == selected_race].copy()
             st.markdown("</div>", unsafe_allow_html=True)
             
-            df_display = df_loc[df['場所'] == selected_race].copy()
-            race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
-            
-            st.markdown(f"""
-                <div style="text-align: center; margin: 30px 0; border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 15px;">
-                    <span style="font-family: 'Cinzel'; font-size: 1.5rem; color: #fff;">{selected_location} {selected_race}R</span><br>
-                    <span style="font-family: 'Lato'; color: #888; letter-spacing: 0.1em;">{race_name}</span>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            cols = ['AI順位', '印', '枠', '番', '馬名', '騎手', 'AI指数']
-            show_cols = [c for c in cols if c in df_display.columns]
-            
-            if '印' in df_display.columns: df_display['印'] = df_display['印'].fillna('')
-            if 'AI順位' in df_display.columns: df_display = df_display.sort_values('AI順位')
-            
-            st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
-            st.dataframe(df_display[show_cols], use_container_width=True, hide_index=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+            # 3. ★修正ポイント：データがあるかチェック！
+            if df_display.empty:
+                st.info(f"{selected_location} {selected_race}R のデータは現在用意されていません。")
+            else:
+                # 4. データがある場合のみ、表示ロジックを実行
+                race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
+                
+                st.markdown(f"""
+                    <div style="text-align: center; margin: 30px 0; border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 15px;">
+                        <span style="font-family: 'Cinzel'; font-size: 1.5rem; color: #fff;">{selected_location} {selected_race}R</span><br>
+                        <span style="font-family: 'Lato'; color: #888; letter-spacing: 0.1em;">{race_name}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                cols = ['AI順位', '印', '枠', '番', '馬名', '騎手', 'AI指数']
+                show_cols = [c for c in cols if c in df_display.columns]
+                
+                if '印' in df_display.columns: df_display['印'] = df_display['印'].fillna('')
+                if 'AI順位' in df_display.columns: df_display = df_display.sort_values('AI順位')
+                
+                st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
+                st.dataframe(df_display[show_cols], use_container_width=True, hide_index=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+        
         except Exception as e:
             st.error(f"System Error: {e}")
     else:
