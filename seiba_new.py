@@ -51,7 +51,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS) - 中央寄せ最終修正
+# 2. Design (CSS) - サブタイトル中央寄せ修正
 # ---------------------------------------------------------
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:wght@400;500;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
@@ -80,24 +80,22 @@ custom_css = """
     }
     .stTextInput input:focus { border-bottom: 1px solid #E0C582 !important; }
 
-    /* --- ロゴ (中央寄せ最終修正) --- */
+    /* --- ロゴとサブタイトルの中央寄せ FIX --- */
     .logo-text { 
-        font-size: clamp(2rem, 8vw, 3.5rem); 
-        text-align: center !important; /* 強力な中央寄せ */
-        margin: 0 auto !important; /* ブロック要素自体を中央へ */
-        background: linear-gradient(to right, #E0C582, #fcf6ba, #E0C582); 
-        -webkit-background-clip: text; 
-        color: transparent; 
-        font-family: 'Playfair Display', serif; 
-        font-weight: 800; 
-        white-space: nowrap; 
+        font-size: clamp(2rem, 8vw, 3.5rem); text-align: center !important; margin: 0 auto !important;
+        background: linear-gradient(to right, #E0C582, #fcf6ba, #E0C582); -webkit-background-clip: text; color: transparent; 
+        font-family: 'Playfair Display', serif; font-weight: 800; white-space: nowrap; 
     }
-    /* 親要素の調整 (Streamlit特有のパディングを相殺) */
-    .block-container { padding-top: 3rem !important; padding-bottom: 5rem !important; max-width: 1000px !important; }
+    .sub-logo { 
+        text-align: center !important; /* 中央寄せ強化 */
+        margin: 0 auto !important; /* ← ★ブロック要素の中央寄せ★ */
+        width: 100% !important; /* 幅を確保 */
+        color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; 
+    }
     
-    /* その他の枠線削除 */
+    /* その他設定 */
     .stDataFrame table { border: none !important; }
-
+    .block-container { padding-top: 3rem !important; padding-bottom: 5rem !important; max-width: 1000px !important; }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
