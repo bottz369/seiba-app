@@ -51,31 +51,41 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS) - 最終修正と新色適用
+# 2. Design (CSS) - 最終調整版
 # ---------------------------------------------------------
 custom_css = """
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:wght@400;500;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
-    /* --- 新色と全体設定 --- */
+    /* --- 全体設定 --- */
     .stApp { 
-        /* 背景色をサファイアがかった深みのあるグラデーションに変更 */
         background: radial-gradient(circle at 50% 30%, #111133 0%, #000000 100%) !important; 
-        color: #E0C582; /* シャンパンゴールド */
+        color: #E0C582; 
         font-family: 'Lato', sans-serif; 
     }
+    
+    /* --- フォント変更 (Playfair Display) --- */
     h1, h2, h3, h4, h5 { 
-        font-family: 'Cinzel', serif !important; 
-        color: #E0C582 !important; /* シャンパンゴールド */
-        text-shadow: 0 4px 15px rgba(224, 197, 130, 0.5); /* 柔らかな光沢 */
+        font-family: 'Playfair Display', serif !important; 
+        font-weight: 500 !important; /* 細めに変更 */
+        letter-spacing: 0.15em !important;
+        color: #E0C582 !important; 
+        text-shadow: 0 4px 15px rgba(224, 197, 130, 0.4); 
     }
     
-    /* 不要な要素の削除 */
+    /* --- 不要な要素の削除 & 枠線削除 --- */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
     
-    /* --- フォームとセレクトボックスの枠線修正（最重要） --- */
+    /* ガラス効果 */
+    .glass-box { 
+        background: rgba(255,255,255,0.03); 
+        backdrop-filter: blur(15px); 
+        border: none !important; /* 枠線を完全に削除 */
+        box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    }
+    
+    /* --- 入力フォーム (小文字表示 & 枠線修正) --- */
     /* SelectboxやTextInputの外側のコンテナの枠線と背景を消去 */
-    div[data-testid*="stSelectbox"], 
-    div[data-testid*="stTextInput"] {
+    div[data-testid*="stSelectbox"], div[data-testid*="stTextInput"] {
         border: none !important;
         background-color: transparent !important;
         box-shadow: none !important;
@@ -85,60 +95,38 @@ custom_css = """
     .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
         background: transparent !important; 
         border: none !important; 
-        border-bottom: 1px solid #777 !important; /* 線を細く、目立たない色に */
+        border-bottom: 1px solid #777 !important;
         color: #fff !important; 
         text-align: center; 
-        font-family: 'Cinzel', serif; 
+        font-family: 'Lato', sans-serif; /* 入力文字のフォントをシンプルなものに戻す */
+        text-transform: none !important; /* ← ★小文字表示の修正★ */
         letter-spacing: 0.1em;
-        text-transform: none !important; 
         border-radius: 0px !important;
     }
-    .stTextInput input:focus { border-bottom: 1px solid #E0C582 !important; box-shadow: none !important; }
+    
+    /* --- サブタイトルの修正 --- */
+    .sub-logo { 
+        text-align: center; /* 中央揃えの再確認 */
+        color: #888; 
+        letter-spacing: 0.4em; 
+        font-size: 0.8rem; 
+        margin-bottom: 3rem; 
+        text-transform: uppercase; 
+    }
+    
+    /* --- テーブルの枠線とタイトルの仕切りを削除 --- */
+    div[data-testid="stDataFrame"] { border: none !important; }
+    .stDataFrame table { border: none !important; }
+    
+    /* レースタイトル上下の仕切りを削除 */
+    .race-title-separator { display: none !important; }
+    .stApp div[style*="border-top"] { border-top: none !important; }
+    .stApp div[style*="border-bottom"] { border-bottom: none !important; }
 
-    /* ボタン設定 (ホバーをエレガントに) */
+    /* その他ボタン設定 */
     .stButton button {
-        background: transparent !important; 
-        border: 1px solid #E0C582 !important; 
-        color: #E0C582 !important;
-        font-family: 'Cinzel', serif !important; 
-        letter-spacing: 0.2em; 
-        transition: all 0.3s ease;
-        border-radius: 0px !important;
-    }
-    .stButton button:hover { 
-        background: rgba(224, 197, 130, 0.1) !important; /* 薄く光る程度に */
-        color: #E0C582 !important;
-        box-shadow: 0 0 10px rgba(224, 197, 130, 0.4);
-    }
-    
-    /* ロゴ設定 */
-    .logo-text { 
-        font-size: clamp(2rem, 8vw, 3.5rem); 
-        text-align: center; 
-        background: linear-gradient(to right, #E0C582, #fcf6ba, #E0C582); /* 柔らかなグラデーション */
-        -webkit-background-clip: text; 
-        color: transparent; 
-        font-family: 'Cinzel', serif; 
-        font-weight: 800; 
-        white-space: nowrap; 
-    }
-    
-    /* ガラス効果 */
-    .glass-box { 
-        background: rgba(255,255,255,0.03); 
-        backdrop-filter: blur(15px); /* 強くぼかす */
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(224, 197, 130, 0.2); /* シャンパンゴールドの薄い枠線 */
-        padding: 30px; 
-        border-radius: 4px; /* 角を少し丸く */
-        box-shadow: 0 0 40px rgba(0,0,0,0.8);
-    }
-    
-    /* 管理画面 (Expander) のカスタマイズ */
-    .streamlit-expanderHeader {
-        background-color: rgba(255,255,255,0.05) !important;
-        color: #E0C582 !important;
-        border: 1px solid #333 !important;
+        background: transparent !important; border: 1px solid #E0C582 !important; color: #E0C582 !important;
+        font-family: 'Playfair Display', serif !important; letter-spacing: 0.2em; transition: 0.3s;
     }
 </style>
 """
@@ -297,8 +285,8 @@ else:
                 race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
                 
                 st.markdown(f"""
-                    <div style="text-align: center; margin: 30px 0; border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 15px;">
-                        <span style="font-family: 'Cinzel'; font-size: 1.5rem; color: #fff;">{selected_location} {selected_race}R</span><br>
+                    <div class="race-title-separator" style="text-align: center; margin: 30px 0; padding: 15px;">
+                        <span style="font-family: 'Playfair Display'; font-weight: 500; font-size: 1.5rem; color: #fff;">{selected_location} {selected_race}R</span><br>
                         <span style="font-family: 'Lato'; color: #888; letter-spacing: 0.1em;">{race_name}</span>
                     </div>
                 """, unsafe_allow_html=True)
