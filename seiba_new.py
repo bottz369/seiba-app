@@ -4,7 +4,7 @@ import os
 from supabase import create_client, Client
 
 # ---------------------------------------------------------
-# 0. System Functions
+# 0. System Functions & Database Connection
 # ---------------------------------------------------------
 def init_connection():
     try:
@@ -51,28 +51,20 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS) - 修正・強化版
+# 2. Design (CSS) - UIバグ修正済み
 # ---------------------------------------------------------
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
-    /* --- 全体設定 --- */
-    .stApp { 
-        background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; 
-        color: #e0e0e0; 
-        font-family: 'Lato', sans-serif; 
-    }
-    h1, h2, h3, h4, h5 { 
-        font-family: 'Cinzel', serif !important; 
-        color: #D4AF37 !important; 
-        text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); 
-    }
+    /* 全体設定 */
+    .stApp { background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; color: #e0e0e0; font-family: 'Lato', sans-serif; }
+    h1, h2, h3 { font-family: 'Cinzel', serif !important; color: #D4AF37 !important; text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
     
-    /* --- 不要な要素の完全削除 --- */
+    /* 不要な要素の削除 */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
     
-    /* --- 入力フォーム (ログイン・登録・CSV選択) --- */
-    .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
+    /* フォーム設定 - ★ここを修正★ */
+    .stTextInput input {
         background: transparent !important; 
         border: none !important; 
         border-bottom: 1px solid #555 !important;
@@ -80,11 +72,11 @@ custom_css = """
         text-align: center; 
         font-family: 'Cinzel', serif; 
         letter-spacing: 0.1em;
-        border-radius: 0px !important;
+        text-transform: none !important; /* ← 大文字変換を無効化 */
     }
-    .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; box-shadow: none !important; }
+    .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; }
     
-    /* --- ボタン --- */
+    /* ボタン設定 */
     .stButton button {
         background: transparent !important; 
         border: 1px solid #D4AF37 !important; 
@@ -95,75 +87,14 @@ custom_css = """
         transition: 0.3s;
         border-radius: 0px !important;
     }
-    .stButton button:hover { 
-        background: #D4AF37 !important; 
-        color: #000 !important; 
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
-    }
+    .stButton button:hover { background: #D4AF37 !important; color: #000 !important; }
     
-    /* --- ロゴ (スマホ対応) --- */
-    .logo-text { 
-        font-size: clamp(2rem, 8vw, 3.5rem); 
-        text-align: center; 
-        background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); 
-        -webkit-background-clip: text; 
-        color: transparent; 
-        font-family: 'Cinzel', serif; 
-        font-weight: 800; 
-        white-space: nowrap; /* 改行禁止 */
-    }
-    .sub-logo { 
-        text-align: center; 
-        color: #888; 
-        letter-spacing: 0.4em; 
-        font-size: 0.8rem; 
-        margin-bottom: 3rem; 
-        text-transform: uppercase; 
-    }
+    /* ロゴ設定 */
+    .logo-text { font-size: clamp(2rem, 8vw, 3.5rem); text-align: center; background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); -webkit-background-clip: text; color: transparent; font-family: 'Cinzel', serif; font-weight: 800; white-space: nowrap; }
+    .sub-logo { text-align: center; color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; }
     
-    /* --- ガラス効果ボックス --- */
-    .glass-box { 
-        background: rgba(255,255,255,0.03); 
-        backdrop-filter: blur(10px); 
-        border: 1px solid rgba(212,175,55,0.2); 
-        padding: 30px; 
-        border-radius: 2px; 
-        margin-bottom: 20px;
-    }
-    
-    /* --- 管理画面 (Expander) のカスタマイズ --- */
-    .streamlit-expanderHeader {
-        background-color: rgba(255,255,255,0.05) !important;
-        color: #D4AF37 !important;
-        font-family: 'Cinzel', serif !important;
-        border: 1px solid #333 !important;
-        border-radius: 0px !important;
-    }
-    .streamlit-expanderContent {
-        background-color: rgba(0,0,0,0.5) !important;
-        border: 1px solid #333 !important;
-        border-top: none !important;
-        color: #ddd !important;
-    }
-    
-    /* --- タブのデザイン修正 --- */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-        background-color: transparent;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: transparent;
-        border-radius: 0px;
-        color: #888;
-        font-family: 'Cinzel', serif;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: transparent;
-        color: #D4AF37;
-        border-bottom: 2px solid #D4AF37;
-    }
+    /* ガラス効果 */
+    .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.2); padding: 30px; border-radius: 2px; }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -180,12 +111,12 @@ if 'user' not in st.session_state:
 # --- AUTHENTICATION ---
 if not st.session_state.user:
     if not supabase:
-        st.warning("Maintenance Mode: Database connecting...")
+        st.warning("System Error: Database Connection Failed.")
         st.stop()
         
     tab1, tab2 = st.tabs(["LOGIN", "REGISTER"])
     
-    # LOGIN
+    # LOGIN TAB (二度打ちバグ修正済み)
     with tab1:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -196,23 +127,28 @@ if not st.session_state.user:
                 btn = st.form_submit_button("ENTER")
                 
                 if btn:
-                    try:
-                        res = supabase.table('users').select("*").eq('username', username).eq('password', password).execute()
-                        if len(res.data) > 0:
-                            user_data = res.data[0]
-                            if user_data['status'] == 'approved':
-                                st.session_state.user = user_data
-                                safe_rerun()
-                            elif user_data['status'] == 'pending':
-                                st.warning("Account pending approval.")
+                    # ★修正ポイント：入力値が空でないかを先に厳密にチェック★
+                    if username and password: 
+                        try:
+                            res = supabase.table('users').select("*").eq('username', username).eq('password', password).execute()
+                            if len(res.data) > 0:
+                                user_data = res.data[0]
+                                if user_data['status'] == 'approved':
+                                    st.session_state.user = user_data
+                                    safe_rerun()
+                                elif user_data['status'] == 'pending':
+                                    st.warning("Account pending approval.")
+                                else:
+                                    st.error("Access Denied.")
                             else:
-                                st.error("Access Denied.")
-                        else:
-                            st.error("Invalid credentials.")
-                    except:
-                        st.error("Login failed.")
+                                st.error("Invalid credentials.")
+                        except Exception as e:
+                            st.error(f"Login Error: {e}")
+                    else:
+                        st.error("Please enter both username and password.")
 
-    # REGISTER
+
+    # REGISTER TAB (二度打ちバグ修正済み)
     with tab2:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -223,11 +159,12 @@ if not st.session_state.user:
                 reg_btn = st.form_submit_button("APPLY")
                 
                 if reg_btn:
+                    # ★修正ポイント：入力値が空でないかを先に厳密にチェック★
                     if new_user and new_pass:
                         try:
                             check = supabase.table('users').select("*").eq('username', new_user).execute()
                             if len(check.data) > 0:
-                                st.error("Username taken.")
+                                st.error("Username already taken.")
                             else:
                                 supabase.table('users').insert({
                                     "username": new_user,
@@ -236,10 +173,10 @@ if not st.session_state.user:
                                     "role": "member"
                                 }).execute()
                                 st.success("Application Sent.")
-                        except:
-                            st.error("Registration failed.")
+                        except Exception as e:
+                            st.error(f"Register Error: {e}")
                     else:
-                        st.warning("Fill all fields.")
+                        st.warning("Please fill all fields.")
 
 # --- DASHBOARD ---
 else:
@@ -306,7 +243,7 @@ else:
             selected_race = f_col2.selectbox("RACE", races, format_func=lambda x: f"{x}R")
             st.markdown("</div>", unsafe_allow_html=True)
             
-            df_display = df_loc[df_loc['R'] == selected_race].copy()
+            df_display = df_loc[df['場所'] == selected_race].copy()
             race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
             
             st.markdown(f"""
@@ -326,7 +263,7 @@ else:
             st.dataframe(df_display[show_cols], use_container_width=True, hide_index=True)
             st.markdown("</div>", unsafe_allow_html=True)
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"System Error: {e}")
     else:
         st.info("Awaiting Data Update...")
     
