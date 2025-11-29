@@ -51,9 +51,8 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS) - ここを安全な書き方に変更
+# 2. Design (CSS)
 # ---------------------------------------------------------
-# CSSを独立させることで、タグの抜け漏れを防ぎます
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -66,56 +65,27 @@ custom_css = """
     
     /* フォーム設定 */
     .stTextInput input {
-        background: transparent !important; 
-        border: none !important; 
-        border-bottom: 1px solid #555 !important;
-        color: #fff !important; 
-        text-align: center; 
-        font-family: 'Cinzel', serif; 
-        letter-spacing: 0.1em;
+        background: transparent !important; border: none !important; border-bottom: 1px solid #555 !important;
+        color: #fff !important; text-align: center; font-family: 'Cinzel', serif; letter-spacing: 0.1em;
     }
     .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; }
     
     /* ボタン設定 */
     .stButton button {
-        background: transparent !important; 
-        border: 1px solid #D4AF37 !important; 
-        color: #D4AF37 !important;
-        font-family: 'Cinzel', serif !important; 
-        letter-spacing: 0.2em; 
-        width: 100%; 
-        transition: 0.3s;
+        background: transparent !important; border: 1px solid #D4AF37 !important; color: #D4AF37 !important;
+        font-family: 'Cinzel', serif !important; letter-spacing: 0.2em; width: 100%; transition: 0.3s;
     }
     .stButton button:hover { background: #D4AF37 !important; color: #000 !important; }
     
     /* ロゴ設定 */
     .logo-text { 
-        font-size: clamp(2rem, 8vw, 3.5rem); 
-        text-align: center; 
-        background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); 
-        -webkit-background-clip: text; 
-        color: transparent; 
-        font-family: 'Cinzel', serif; 
-        font-weight: 800; 
-        white-space: nowrap; 
+        font-size: clamp(2rem, 8vw, 3.5rem); text-align: center; background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); 
+        -webkit-background-clip: text; color: transparent; font-family: 'Cinzel', serif; font-weight: 800; white-space: nowrap; 
     }
-    .sub-logo { 
-        text-align: center; 
-        color: #888; 
-        letter-spacing: 0.4em; 
-        font-size: 0.8rem; 
-        margin-bottom: 3rem; 
-        text-transform: uppercase; 
-    }
+    .sub-logo { text-align: center; color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; }
     
     /* ガラス効果 */
-    .glass-box { 
-        background: rgba(255,255,255,0.03); 
-        backdrop-filter: blur(10px); 
-        border: 1px solid rgba(212,175,55,0.2); 
-        padding: 30px; 
-        border-radius: 2px; 
-    }
+    .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.2); padding: 30px; border-radius: 2px; }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -132,7 +102,6 @@ if 'user' not in st.session_state:
 # --- AUTHENTICATION ---
 if not st.session_state.user:
     if not supabase:
-        # DB接続エラー時はメッセージだけ出して停止（エラー画面を出さない）
         st.warning("Maintenance Mode: Database connecting...")
         st.stop()
         
@@ -198,15 +167,17 @@ if not st.session_state.user:
 else:
     user = st.session_state.user
     
-    # Admin Panel
+    # --- ADMIN PANEL (強化版) ---
     if user['role'] == 'admin':
-        with st.expander("ADMIN DASHBOARD"):
+        with st.expander("ADMIN DASHBOARD (Member Management)", expanded=True):
+            # 1. 承認待ちリスト
+            st.write("##### ⚠️ Pending Requests")
             try:
                 pending_users = supabase.table('users').select("*").eq('status', 'pending').execute().data
                 if pending_users:
                     for p_user in pending_users:
                         c1, c2, c3 = st.columns([2, 1, 1])
-                        c1.write(f"USER: {p_user['username']}")
+                        c1.info(f"New User: **{p_user['username']}**")
                         if c2.button("APPROVE", key=f"app_{p_user['id']}"):
                             supabase.table('users').update({"status": "approved"}).eq("id", p_user['id']).execute()
                             safe_rerun()
@@ -214,11 +185,39 @@ else:
                             supabase.table('users').delete().eq("id", p_user['id']).execute()
                             safe_rerun()
                 else:
-                    st.caption("No pending users.")
+                    st.caption("No pending requests.")
             except:
-                pass
+                st.error("Error fetching pending users.")
+            
+            st.markdown("---")
+            
+            # 2. 会員一覧リスト
+            st.write("##### 👥 Active Members")
+            try:
+                # admin以外のアクティブユーザーを取得
+                active_users = supabase.table('users').select("*").eq('status', 'approved').neq('role', 'admin').execute().data
+                if active_users:
+                    # 見やすくテーブル形式風に表示
+                    for a_user in active_users:
+                        col_u, col_p, col_btn = st.columns([2, 2, 1])
+                        with col_u:
+                            st.write(f"👤 **{a_user['username']}**")
+                        with col_p:
+                            # パスワードは伏字またはそのまま表示（管理用なので表示）
+                            st.caption(f"Pass: {a_user['password']}")
+                        with col_btn:
+                            # 削除ボタン（赤くはできませんが警告付きで）
+                            if st.button("REMOVE", key=f"del_{a_user['id']}"):
+                                supabase.table('users').delete().eq("id", a_user['id']).execute()
+                                st.warning(f"Removed {a_user['username']}")
+                                safe_rerun()
+                        st.divider() # 線で区切る
+                else:
+                    st.info("No active members yet.")
+            except:
+                st.error("Error fetching active members.")
 
-    # Data Display
+    # --- DATA DISPLAY ---
     df = None
     if os.path.exists('data.csv'):
         df = load_data('data.csv')
