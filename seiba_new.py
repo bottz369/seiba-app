@@ -35,7 +35,7 @@ def load_data(file_path):
 st.set_page_config(page_title="聖馬AI - SEIBA Premium", layout="wide", initial_sidebar_state="collapsed")
 
 # ---------------------------------------------------------
-# 2. デザイン設定（徹底的に隠す設定を追加）
+# 2. デザイン設定（強力な隠蔽設定）
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -45,25 +45,34 @@ st.markdown("""
     /* フォント設定 */
     h1, h2, h3, h4, h5 { font-family: serif !important; color: #D4AF37 !important; }
     
-    /* --- ここから「隠す」設定 --- */
-    
-    /* 1. 右上のハンバーガーメニューとGitHubアイコンを消す */
-    header {visibility: hidden;}
-    
-    /* 2. 下のフッター（Made with Streamlit）を消す */
-    footer {visibility: hidden;}
-    
-    /* 3. 画像拡大ボタンなどを消す */
-    button[title="View fullscreen"] {visibility: hidden;}
-    
-    /* 4. 上部の余白を削ってスマホで見やすくする */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    
     /* データテーブルのデザイン */
     .stDataFrame { border: 1px solid #333; }
+
+    /* --- ここから強力な「隠す」設定 --- */
+    
+    /* 1. ヘッダーバー（右上のメニューなど）を領域ごと完全に消す */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    
+    /* 2. フッター（右下のStreamlit/GitHubアイコン）を領域ごと完全に消す */
+    footer[data-testid="stFooter"] {
+        display: none !important;
+    }
+    /* 念の為、古い仕様のクラス名でも非表示指定 */
+    .stFooter {
+        display: none !important;
+    }
+    
+    /* 3. 全体の余白を調整して画面を広く使う */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 1rem;
+    }
+    
+    /* 4. リンクのホバー時の色なども調整 */
+    a { color: #D4AF37 !important; text-decoration: none; }
+    a:hover { text-decoration: underline; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -71,7 +80,7 @@ st.markdown("""
 # 3. アプリケーション本体
 # ---------------------------------------------------------
 
-# タイトル（バージョン表記も消してシンプルに）
+# タイトル
 st.title("聖馬AI")
 st.markdown("##### The Art of Prediction - 究極の競馬予測")
 st.markdown("---")
