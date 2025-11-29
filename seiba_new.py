@@ -4,10 +4,9 @@ import os
 from supabase import create_client, Client
 
 # ---------------------------------------------------------
-# 0. System Functions & Database Connection
+# 0. System Functions
 # ---------------------------------------------------------
 def init_connection():
-    # 環境変数から取得（エラー回避のためtry-except）
     try:
         url = os.environ.get("SUPABASE_URL")
         key = os.environ.get("SUPABASE_KEY")
@@ -52,20 +51,20 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (ここが修正ポイント！)
+# 2. Design (CSS) - ここを安全な書き方に変更
 # ---------------------------------------------------------
-# CSSを確実に適用させるために、書き方を少し整理しました
-st.markdown("""
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
-    <style>
-    /* 全体の設定 */
+# CSSを独立させることで、タグの抜け漏れを防ぎます
+custom_css = """
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<style>
+    /* 全体設定 */
     .stApp { background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; color: #e0e0e0; font-family: 'Lato', sans-serif; }
     h1, h2, h3 { font-family: 'Cinzel', serif !important; color: #D4AF37 !important; text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
     
-    /* 余計なものを隠す */
+    /* 不要な要素の削除 */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
     
-    /* 入力フォームのデザイン */
+    /* フォーム設定 */
     .stTextInput input {
         background: transparent !important; 
         border: none !important; 
@@ -77,7 +76,7 @@ st.markdown("""
     }
     .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; }
     
-    /* ボタンのデザイン */
+    /* ボタン設定 */
     .stButton button {
         background: transparent !important; 
         border: 1px solid #D4AF37 !important; 
@@ -89,7 +88,7 @@ st.markdown("""
     }
     .stButton button:hover { background: #D4AF37 !important; color: #000 !important; }
     
-    /* ロゴのデザイン */
+    /* ロゴ設定 */
     .logo-text { 
         font-size: clamp(2rem, 8vw, 3.5rem); 
         text-align: center; 
@@ -109,7 +108,7 @@ st.markdown("""
         text-transform: uppercase; 
     }
     
-    /* ガラス風ボックス */
+    /* ガラス効果 */
     .glass-box { 
         background: rgba(255,255,255,0.03); 
         backdrop-filter: blur(10px); 
@@ -117,8 +116,9 @@ st.markdown("""
         padding: 30px; 
         border-radius: 2px; 
     }
-    </style>
-    """, unsafe_allow_html=True)
+</style>
+"""
+st.markdown(custom_css, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 3. Application Logic
@@ -129,16 +129,16 @@ st.markdown('<div class="sub-logo">The Art of Prediction</div>', unsafe_allow_ht
 if 'user' not in st.session_state:
     st.session_state.user = None
 
-# --- AUTHENTICATION AREA ---
+# --- AUTHENTICATION ---
 if not st.session_state.user:
-    # データベース未接続の場合の安全策
     if not supabase:
-        st.error("System Error: Database Connection Failed. Please check Render Environment Variables.")
+        # DB接続エラー時はメッセージだけ出して停止（エラー画面を出さない）
+        st.warning("Maintenance Mode: Database connecting...")
         st.stop()
         
     tab1, tab2 = st.tabs(["LOGIN", "REGISTER"])
     
-    # LOGIN TAB
+    # LOGIN
     with tab1:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -157,15 +157,15 @@ if not st.session_state.user:
                                 st.session_state.user = user_data
                                 safe_rerun()
                             elif user_data['status'] == 'pending':
-                                st.warning("Your account is pending approval.")
+                                st.warning("Account pending approval.")
                             else:
                                 st.error("Access Denied.")
                         else:
                             st.error("Invalid credentials.")
-                    except Exception as e:
-                        st.error(f"Login Error: {e}")
+                    except:
+                        st.error("Login failed. Please try again.")
 
-    # REGISTER TAB
+    # REGISTER
     with tab2:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -173,15 +173,14 @@ if not st.session_state.user:
             with st.form("reg_form"):
                 new_user = st.text_input("NEW USERNAME")
                 new_pass = st.text_input("NEW PASSWORD", type="password")
-                reg_btn = st.form_submit_button("APPLY FOR MEMBERSHIP")
+                reg_btn = st.form_submit_button("APPLY")
                 
                 if reg_btn:
                     if new_user and new_pass:
                         try:
-                            # 重複チェック
                             check = supabase.table('users').select("*").eq('username', new_user).execute()
                             if len(check.data) > 0:
-                                st.error("Username already taken.")
+                                st.error("Username taken.")
                             else:
                                 supabase.table('users').insert({
                                     "username": new_user,
@@ -189,40 +188,37 @@ if not st.session_state.user:
                                     "status": "pending",
                                     "role": "member"
                                 }).execute()
-                                st.success("Application sent! Please wait for approval.")
-                        except Exception as e:
-                            st.error(f"Register Error: {e}")
+                                st.success("Application Sent.")
+                        except:
+                            st.error("Registration failed.")
                     else:
-                        st.warning("Please fill all fields.")
+                        st.warning("Fill all fields.")
 
-# --- MAIN DASHBOARD ---
+# --- DASHBOARD ---
 else:
     user = st.session_state.user
     
-    # --- ADMIN PANEL ---
+    # Admin Panel
     if user['role'] == 'admin':
-        with st.expander("ADMIN DASHBOARD (Manage Users)"):
-            st.write("### Pending Approvals")
+        with st.expander("ADMIN DASHBOARD"):
             try:
                 pending_users = supabase.table('users').select("*").eq('status', 'pending').execute().data
                 if pending_users:
                     for p_user in pending_users:
                         c1, c2, c3 = st.columns([2, 1, 1])
-                        c1.write(f"USER: **{p_user['username']}**")
+                        c1.write(f"USER: {p_user['username']}")
                         if c2.button("APPROVE", key=f"app_{p_user['id']}"):
                             supabase.table('users').update({"status": "approved"}).eq("id", p_user['id']).execute()
-                            st.success(f"Approved {p_user['username']}")
                             safe_rerun()
                         if c3.button("REJECT", key=f"rej_{p_user['id']}"):
                             supabase.table('users').delete().eq("id", p_user['id']).execute()
-                            st.warning(f"Rejected {p_user['username']}")
                             safe_rerun()
                 else:
-                    st.caption("No pending applications.")
+                    st.caption("No pending users.")
             except:
-                st.error("Admin Panel Error")
-    
-    # --- PREDICTION DATA ---
+                pass
+
+    # Data Display
     df = None
     if os.path.exists('data.csv'):
         df = load_data('data.csv')
@@ -258,9 +254,8 @@ else:
             st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
             st.dataframe(df_display[show_cols], use_container_width=True, hide_index=True)
             st.markdown("</div>", unsafe_allow_html=True)
-            
         except Exception as e:
-            st.error(f"System Error: {e}")
+            st.error(f"Error: {e}")
     else:
         st.info("Awaiting Data Update...")
     
