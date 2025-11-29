@@ -51,83 +51,53 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS) - 最終調整版
+# 2. Design (CSS) - 中央寄せ最終修正
 # ---------------------------------------------------------
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:wght@400;500;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
     /* --- 全体設定 --- */
-    .stApp { 
-        background: radial-gradient(circle at 50% 30%, #111133 0%, #000000 100%) !important; 
-        color: #E0C582; 
-        font-family: 'Lato', sans-serif; 
-    }
-    
-    /* --- フォント変更 (Playfair Display) --- */
+    .stApp { background: radial-gradient(circle at 50% 30%, #111133 0%, #000000 100%) !important; color: #E0C582; font-family: 'Lato', sans-serif; }
     h1, h2, h3, h4, h5 { 
-        font-family: 'Playfair Display', serif !important; 
-        font-weight: 500 !important; /* 細めに変更 */
-        letter-spacing: 0.15em !important;
-        color: #E0C582 !important; 
-        text-shadow: 0 4px 15px rgba(224, 197, 130, 0.4); 
+        font-family: 'Playfair Display', serif !important; font-weight: 500 !important; letter-spacing: 0.15em !important;
+        color: #E0C582 !important; text-shadow: 0 4px 15px rgba(224, 197, 130, 0.4); 
     }
     
-    /* --- 不要な要素の削除 & 枠線削除 --- */
+    /* 不要な要素の削除 */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
     
     /* ガラス効果 */
     .glass-box { 
-        background: rgba(255,255,255,0.03); 
-        backdrop-filter: blur(15px); 
-        border: none !important; /* 枠線を完全に削除 */
+        background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); border: none !important; 
         box-shadow: 0 0 40px rgba(0,0,0,0.8);
     }
     
-    /* --- 入力フォーム (小文字表示 & 枠線修正) --- */
-    /* SelectboxやTextInputの外側のコンテナの枠線と背景を消去 */
-    div[data-testid*="stSelectbox"], div[data-testid*="stTextInput"] {
-        border: none !important;
-        background-color: transparent !important;
-        box-shadow: none !important;
-    }
-    
-    /* 入力フォームの実際のフィールド */
+    /* --- 入力フォーム設定 --- */
+    div[data-testid*="stSelectbox"], div[data-testid*="stTextInput"] { border: none !important; background-color: transparent !important; }
     .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
-        background: transparent !important; 
-        border: none !important; 
-        border-bottom: 1px solid #777 !important;
-        color: #fff !important; 
-        text-align: center; 
-        font-family: 'Lato', sans-serif; /* 入力文字のフォントをシンプルなものに戻す */
-        text-transform: none !important; /* ← ★小文字表示の修正★ */
-        letter-spacing: 0.1em;
-        border-radius: 0px !important;
+        background: transparent !important; border: none !important; border-bottom: 1px solid #777 !important;
+        color: #fff !important; text-align: center; font-family: 'Lato', sans-serif; text-transform: none !important; 
     }
-    
-    /* --- サブタイトルの修正 --- */
-    .sub-logo { 
-        text-align: center; /* 中央揃えの再確認 */
-        color: #888; 
-        letter-spacing: 0.4em; 
-        font-size: 0.8rem; 
-        margin-bottom: 3rem; 
-        text-transform: uppercase; 
-    }
-    
-    /* --- テーブルの枠線とタイトルの仕切りを削除 --- */
-    div[data-testid="stDataFrame"] { border: none !important; }
-    .stDataFrame table { border: none !important; }
-    
-    /* レースタイトル上下の仕切りを削除 */
-    .race-title-separator { display: none !important; }
-    .stApp div[style*="border-top"] { border-top: none !important; }
-    .stApp div[style*="border-bottom"] { border-bottom: none !important; }
+    .stTextInput input:focus { border-bottom: 1px solid #E0C582 !important; }
 
-    /* その他ボタン設定 */
-    .stButton button {
-        background: transparent !important; border: 1px solid #E0C582 !important; color: #E0C582 !important;
-        font-family: 'Playfair Display', serif !important; letter-spacing: 0.2em; transition: 0.3s;
+    /* --- ロゴ (中央寄せ最終修正) --- */
+    .logo-text { 
+        font-size: clamp(2rem, 8vw, 3.5rem); 
+        text-align: center !important; /* 強力な中央寄せ */
+        margin: 0 auto !important; /* ブロック要素自体を中央へ */
+        background: linear-gradient(to right, #E0C582, #fcf6ba, #E0C582); 
+        -webkit-background-clip: text; 
+        color: transparent; 
+        font-family: 'Playfair Display', serif; 
+        font-weight: 800; 
+        white-space: nowrap; 
     }
+    /* 親要素の調整 (Streamlit特有のパディングを相殺) */
+    .block-container { padding-top: 3rem !important; padding-bottom: 5rem !important; max-width: 1000px !important; }
+    
+    /* その他の枠線削除 */
+    .stDataFrame table { border: none !important; }
+
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -284,6 +254,7 @@ else:
                 # --- DISPLAY LOGIC ---
                 race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
                 
+                # レースタイトル（仕切り線なし）
                 st.markdown(f"""
                     <div class="race-title-separator" style="text-align: center; margin: 30px 0; padding: 15px;">
                         <span style="font-family: 'Playfair Display'; font-weight: 500; font-size: 1.5rem; color: #fff;">{selected_location} {selected_race}R</span><br>
