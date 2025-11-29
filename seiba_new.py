@@ -51,34 +51,41 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS) - 枠線修正版
+# 2. Design (CSS) - 最終修正と新色適用
 # ---------------------------------------------------------
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
-    /* 全体設定 */
-    .stApp { background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; color: #e0e0e0; font-family: 'Lato', sans-serif; }
-    h1, h2, h3 { font-family: 'Cinzel', serif !important; color: #D4AF37 !important; text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
+    /* --- 新色と全体設定 --- */
+    .stApp { 
+        /* 背景色をサファイアがかった深みのあるグラデーションに変更 */
+        background: radial-gradient(circle at 50% 30%, #111133 0%, #000000 100%) !important; 
+        color: #E0C582; /* シャンパンゴールド */
+        font-family: 'Lato', sans-serif; 
+    }
+    h1, h2, h3, h4, h5 { 
+        font-family: 'Cinzel', serif !important; 
+        color: #E0C582 !important; /* シャンパンゴールド */
+        text-shadow: 0 4px 15px rgba(224, 197, 130, 0.5); /* 柔らかな光沢 */
+    }
     
     /* 不要な要素の削除 */
     header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
     
-    /* --- フィルタの枠線と背景を消す（修正の肝） --- */
-    /* Selectboxの外側のコンテナ */
-    div[data-testid="stSelectbox"], 
-    div[data-testid="stSelectbox"] > div[data-baseweb="select"],
-    div[data-testid="stTextInput"] {
+    /* --- フォームとセレクトボックスの枠線修正（最重要） --- */
+    /* SelectboxやTextInputの外側のコンテナの枠線と背景を消去 */
+    div[data-testid*="stSelectbox"], 
+    div[data-testid*="stTextInput"] {
         border: none !important;
         background-color: transparent !important;
         box-shadow: none !important;
-        padding: 0px !important;
     }
     
     /* 入力フォームの実際のフィールド */
     .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
         background: transparent !important; 
         border: none !important; 
-        border-bottom: 1px solid #555 !important;
+        border-bottom: 1px solid #777 !important; /* 線を細く、目立たない色に */
         color: #fff !important; 
         text-align: center; 
         font-family: 'Cinzel', serif; 
@@ -86,25 +93,53 @@ custom_css = """
         text-transform: none !important; 
         border-radius: 0px !important;
     }
-    .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; }
-    
-    /* ボタン設定 */
+    .stTextInput input:focus { border-bottom: 1px solid #E0C582 !important; box-shadow: none !important; }
+
+    /* ボタン設定 (ホバーをエレガントに) */
     .stButton button {
-        background: transparent !important; border: 1px solid #D4AF37 !important; color: #D4AF37 !important;
-        font-family: 'Cinzel', serif !important; letter-spacing: 0.2em; width: 100%; transition: 0.3s; border-radius: 0px !important;
+        background: transparent !important; 
+        border: 1px solid #E0C582 !important; 
+        color: #E0C582 !important;
+        font-family: 'Cinzel', serif !important; 
+        letter-spacing: 0.2em; 
+        transition: all 0.3s ease;
+        border-radius: 0px !important;
     }
-    .stButton button:hover { background: #D4AF37 !important; color: #000 !important; }
+    .stButton button:hover { 
+        background: rgba(224, 197, 130, 0.1) !important; /* 薄く光る程度に */
+        color: #E0C582 !important;
+        box-shadow: 0 0 10px rgba(224, 197, 130, 0.4);
+    }
     
     /* ロゴ設定 */
-    .logo-text { font-size: clamp(2rem, 8vw, 3.5rem); text-align: center; background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); -webkit-background-clip: text; color: transparent; font-family: 'Cinzel', serif; font-weight: 800; white-space: nowrap; }
-    .sub-logo { text-align: center; color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; }
+    .logo-text { 
+        font-size: clamp(2rem, 8vw, 3.5rem); 
+        text-align: center; 
+        background: linear-gradient(to right, #E0C582, #fcf6ba, #E0C582); /* 柔らかなグラデーション */
+        -webkit-background-clip: text; 
+        color: transparent; 
+        font-family: 'Cinzel', serif; 
+        font-weight: 800; 
+        white-space: nowrap; 
+    }
     
     /* ガラス効果 */
-    .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.2); padding: 30px; border-radius: 2px; }
+    .glass-box { 
+        background: rgba(255,255,255,0.03); 
+        backdrop-filter: blur(15px); /* 強くぼかす */
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(224, 197, 130, 0.2); /* シャンパンゴールドの薄い枠線 */
+        padding: 30px; 
+        border-radius: 4px; /* 角を少し丸く */
+        box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    }
     
-    /* レイアウト調整 */
-    .block-container { padding-top: 3rem !important; padding-bottom: 5rem !important; max-width: 1000px !important; }
-
+    /* 管理画面 (Expander) のカスタマイズ */
+    .streamlit-expanderHeader {
+        background-color: rgba(255,255,255,0.05) !important;
+        color: #E0C582 !important;
+        border: 1px solid #333 !important;
+    }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
