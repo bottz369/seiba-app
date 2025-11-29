@@ -1,10 +1,20 @@
 import streamlit as st
 import pandas as pd
 import os
+from supabase import create_client, Client
 
 # ---------------------------------------------------------
-# 0. System Functions
+# 0. System Functions & Database Connection
 # ---------------------------------------------------------
+def init_connection():
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_KEY")
+    if not url or not key:
+        return None
+    return create_client(url, key)
+
+supabase = init_connection()
+
 def safe_rerun():
     try:
         st.rerun()
@@ -12,7 +22,7 @@ def safe_rerun():
         try:
             st.experimental_rerun()
         except AttributeError:
-            st.error("Please refresh the page.")
+            st.error("Please refresh.")
 
 def load_data(file_path):
     df = None
@@ -34,197 +44,158 @@ st.set_page_config(
     page_title="Horsemen | Premium Prediction",
     layout="wide",
     initial_sidebar_state="collapsed",
-    menu_items={'Get Help': None, 'Report a bug': None, 'About': None}
+    menu_items={'Get Help': None, 'About': None}
 )
 
 # ---------------------------------------------------------
-# 2. Ultra-Luxury CSS (Mobile Optimized)
+# 2. Design (Stealth & Luxury)
 # ---------------------------------------------------------
 st.markdown("""
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
     <style>
-    /* --- 1. Global Reset & Typography --- */
-    .stApp {
-        background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important;
-        color: #e0e0e0;
-        font-family: 'Lato', sans-serif;
-    }
+    .stApp { background: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #000000 100%) !important; color: #e0e0e0; font-family: 'Lato', sans-serif; }
+    h1, h2, h3 { font-family: 'Cinzel', serif !important; color: #D4AF37 !important; text-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
+    header, footer, #MainMenu, [data-testid="stToolbar"], .stDeployButton { display: none !important; }
     
-    h1, h2, h3 {
-        font-family: 'Cinzel', serif !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.15em !important;
-        text-transform: uppercase;
-        color: #D4AF37 !important;
-        text-shadow: 0px 4px 20px rgba(212, 175, 55, 0.4);
-    }
-    
-    p, div, label {
-        font-family: 'Lato', sans-serif;
-        letter-spacing: 0.05em;
-    }
-
-    /* --- 2. Stealth Mode --- */
-    header, footer, #MainMenu, [data-testid="stToolbar"], [data-testid="stHeader"], [data-testid="stStatusWidget"], .stDeployButton, .viewerBadge_container__1QSob {
-        display: none !important;
-    }
-    .block-container {
-        padding-top: 3rem !important; /* スマホ用に少し詰める */
-        padding-bottom: 5rem !important;
-        max-width: 1000px !important;
-    }
-
-    /* --- 3. Glassmorphism Containers --- */
-    div[data-testid="stForm"], div.stDataFrame {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(212, 175, 55, 0.2);
-        border-radius: 2px;
-        padding: 30px; /* スマホ用に少し余白を減らす */
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    }
-
-    /* --- 4. Inputs & Buttons --- */
     .stTextInput input {
-        background-color: transparent !important;
-        border: none !important;
-        border-bottom: 1px solid #555 !important;
-        color: #fff !important;
-        border-radius: 0px !important;
-        font-family: 'Cinzel', serif;
-        letter-spacing: 0.1em;
-        text-align: center;
-        transition: all 0.3s ease;
+        background: transparent !important; border: none !important; border-bottom: 1px solid #555 !important;
+        color: #fff !important; text-align: center; font-family: 'Cinzel', serif; letter-spacing: 0.1em;
     }
-    .stTextInput input:focus {
-        border-bottom: 1px solid #D4AF37 !important;
-        box-shadow: none !important;
-    }
+    .stTextInput input:focus { border-bottom: 1px solid #D4AF37 !important; }
     
-    div[data-baseweb="select"] > div {
-        background-color: rgba(20, 20, 20, 0.8) !important;
-        border: 1px solid #333 !important;
-        color: #fff !important;
-    }
-
     .stButton button {
-        background: transparent !important;
-        border: 1px solid #D4AF37 !important;
-        color: #D4AF37 !important;
-        font-family: 'Cinzel', serif !important;
-        letter-spacing: 0.2em;
-        padding: 10px 30px !important;
-        transition: all 0.5s ease !important;
-        border-radius: 0px !important;
-        width: 100%; /* スマホで押しやすいように幅広に */
+        background: transparent !important; border: 1px solid #D4AF37 !important; color: #D4AF37 !important;
+        font-family: 'Cinzel', serif !important; letter-spacing: 0.2em; width: 100%; transition: 0.3s;
     }
-    .stButton button:hover {
-        background: #D4AF37 !important;
-        color: #000 !important;
-        box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
-        transform: translateY(-2px);
-    }
+    .stButton button:hover { background: #D4AF37 !important; color: #000 !important; }
     
-    div[data-testid="stDataFrame"] {
-        border: none !important;
-    }
-    table tbody th { display: none; }
+    /* Logo Style */
+    .logo-text { font-size: clamp(2rem, 8vw, 3.5rem); text-align: center; background: linear-gradient(to right, #bf953f, #fcf6ba, #aa771c); -webkit-background-clip: text; color: transparent; font-family: 'Cinzel', serif; font-weight: 800; white-space: nowrap; }
+    .sub-logo { text-align: center; color: #888; letter-spacing: 0.4em; font-size: 0.8rem; margin-bottom: 3rem; text-transform: uppercase; }
     
-    /* --- 5. Custom Logo Text (Responsive) --- */
-    .logo-text {
-        /* 画面幅に合わせてフォントサイズを自動調整 (最小2rem ~ 最大3.5rem) */
-        font-size: clamp(2rem, 8vw, 3.5rem);
-        text-align: center;
-        margin-bottom: 0.5rem;
-        background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-        -webkit-background-clip: text;
-        color: transparent;
-        font-family: 'Cinzel', serif;
-        font-weight: 800;
-        
-        /* 画面幅に合わせて文字間隔も調整 */
-        letter-spacing: clamp(0.05em, 1vw, 0.2em);
-        
-        /* 改行を禁止する */
-        white-space: nowrap;
-    }
-    .sub-logo {
-        text-align: center;
-        color: #888;
-        font-size: 0.9rem;
-        letter-spacing: 0.4em;
-        margin-bottom: 3rem;
-        font-family: 'Lato', sans-serif;
-        text-transform: uppercase;
-    }
-    
-    /* スマホ画面（幅600px以下）向けの微調整 */
-    @media (max-width: 600px) {
-        .block-container {
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-        }
-        div[data-testid="stForm"], div.stDataFrame {
-            padding: 15px !important; /* 内側の余白を詰める */
-        }
-        .sub-logo {
-            font-size: 0.7rem; /* サブタイトルも少し小さく */
-            letter-spacing: 0.2em;
-        }
-    }
+    /* Glass Container */
+    .glass-box { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.2); padding: 30px; border-radius: 2px; }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 3. Application Logic
 # ---------------------------------------------------------
-
 st.markdown('<div class="logo-text">HORSEMEN</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-logo">The Art of Prediction</div>', unsafe_allow_html=True)
 
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
+if 'user' not in st.session_state:
+    st.session_state.user = None
 
-# --- Login Screen ---
-if not st.session_state.logged_in:
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        with st.form(key='login_form'):
-            st.markdown("<div style='text-align: center; margin-bottom: 20px; color: #888; font-family: Cinzel;'>MEMBERS ONLY</div>", unsafe_allow_html=True)
-            password = st.text_input("", type="password", placeholder="ENTER PASSWORD")
-            
-            b_col1, b_col2, b_col3 = st.columns([1,1,1])
-            with b_col2:
-                submit_btn = st.form_submit_button("ENTER")
-            
-            if submit_btn:
-                if password == "seiba2025":
-                    st.session_state.logged_in = True
-                    safe_rerun()
-                else:
-                    st.error("ACCESS DENIED")
+# --- AUTHENTICATION AREA ---
+if not st.session_state.user:
+    if not supabase:
+        st.error("System Configuration Error: Database not connected.")
+        st.stop()
+        
+    tab1, tab2 = st.tabs(["LOGIN", "REGISTER"])
+    
+    # LOGIN TAB
+    with tab1:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            with st.form("login_form"):
+                username = st.text_input("USERNAME")
+                password = st.text_input("PASSWORD", type="password")
+                btn = st.form_submit_button("ENTER")
+                
+                if btn:
+                    try:
+                        # データベース検索
+                        res = supabase.table('users').select("*").eq('username', username).eq('password', password).execute()
+                        if len(res.data) > 0:
+                            user_data = res.data[0]
+                            if user_data['status'] == 'approved':
+                                st.session_state.user = user_data
+                                safe_rerun()
+                            elif user_data['status'] == 'pending':
+                                st.warning("Your account is pending approval.")
+                            else:
+                                st.error("Access Denied.")
+                        else:
+                            st.error("Invalid credentials.")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
 
-# --- Dashboard Screen ---
+    # REGISTER TAB
+    with tab2:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            with st.form("reg_form"):
+                new_user = st.text_input("NEW USERNAME")
+                new_pass = st.text_input("NEW PASSWORD", type="password")
+                reg_btn = st.form_submit_button("APPLY FOR MEMBERSHIP")
+                
+                if reg_btn:
+                    if new_user and new_pass:
+                        try:
+                            # 重複チェック
+                            check = supabase.table('users').select("*").eq('username', new_user).execute()
+                            if len(check.data) > 0:
+                                st.error("Username already taken.")
+                            else:
+                                # 新規登録（承認待ち）
+                                supabase.table('users').insert({
+                                    "username": new_user,
+                                    "password": new_pass,
+                                    "status": "pending",
+                                    "role": "member"
+                                }).execute()
+                                st.success("Application sent! Please wait for approval.")
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                    else:
+                        st.warning("Please fill all fields.")
+
+# --- MAIN DASHBOARD ---
 else:
+    user = st.session_state.user
+    
+    # --- ADMIN PANEL (Only for Admin) ---
+    if user['role'] == 'admin':
+        with st.expander("ADMIN DASHBOARD (Manage Users)"):
+            st.write("### Pending Approvals")
+            # 承認待ちユーザーを取得
+            pending_users = supabase.table('users').select("*").eq('status', 'pending').execute().data
+            
+            if pending_users:
+                for p_user in pending_users:
+                    c1, c2, c3 = st.columns([2, 1, 1])
+                    c1.write(f"USER: **{p_user['username']}**")
+                    if c2.button("APPROVE", key=f"app_{p_user['id']}"):
+                        supabase.table('users').update({"status": "approved"}).eq("id", p_user['id']).execute()
+                        st.success(f"Approved {p_user['username']}")
+                        safe_rerun()
+                    if c3.button("REJECT", key=f"rej_{p_user['id']}"):
+                        supabase.table('users').delete().eq("id", p_user['id']).execute()
+                        st.warning(f"Rejected {p_user['username']}")
+                        safe_rerun()
+            else:
+                st.caption("No pending applications.")
+    
+    # --- PREDICTION DATA ---
     df = None
     if os.path.exists('data.csv'):
         df = load_data('data.csv')
     
     if df is not None:
         try:
-            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
             f_col1, f_col2 = st.columns(2)
+            locations = df['場所'].unique()
+            selected_location = f_col1.selectbox("LOCATION", locations)
             
-            with f_col1:
-                locations = df['場所'].unique()
-                selected_location = st.selectbox("LOCATION", locations)
-            
-            with f_col2:
-                df_loc = df[df['場所'] == selected_location]
-                races = sorted(df_loc['R'].unique())
-                selected_race = st.selectbox("RACE", races, format_func=lambda x: f"{x}R")
+            df_loc = df[df['場所'] == selected_location]
+            races = sorted(df_loc['R'].unique())
+            selected_race = f_col2.selectbox("RACE", races, format_func=lambda x: f"{x}R")
+            st.markdown("</div>", unsafe_allow_html=True)
             
             df_display = df_loc[df_loc['R'] == selected_race].copy()
             race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
@@ -242,18 +213,16 @@ else:
             if '印' in df_display.columns: df_display['印'] = df_display['印'].fillna('')
             if 'AI順位' in df_display.columns: df_display = df_display.sort_values('AI順位')
             
-            st.dataframe(
-                df_display[show_cols],
-                use_container_width=True,
-                hide_index=True
-            )
+            st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
+            st.dataframe(df_display[show_cols], use_container_width=True, hide_index=True)
+            st.markdown("</div>", unsafe_allow_html=True)
             
         except Exception as e:
             st.error(f"System Error: {e}")
     else:
         st.info("Awaiting Data Update...")
     
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("LOGOUT"):
-        st.session_state.logged_in = False
+        st.session_state.user = None
         safe_rerun()
