@@ -15,7 +15,6 @@ def safe_rerun():
             st.error("画面を更新してください")
 
 def load_data(file_path):
-    """GitHub上のデータを読み込む関数"""
     df = None
     encodings = ['utf-8', 'cp932', 'shift_jis']
     for enc in encodings:
@@ -29,64 +28,50 @@ def load_data(file_path):
     return df
 
 # ---------------------------------------------------------
-# 1. ページ設定（メニュー自体を無効化する設定を追加）
+# 1. ページ設定
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="聖馬AI - SEIBA Premium",
+    page_title="聖馬AI", # タイトルもシンプルに
     layout="wide",
-    initial_sidebar_state="collapsed",
-    menu_items={
-        'Get Help': None,
-        'Report a bug': None,
-        'About': None
-    }
+    initial_sidebar_state="collapsed"
 )
 
 # ---------------------------------------------------------
-# 2. デザイン設定（最強の隠蔽CSS）
+# 2. デザイン設定（最終手段）
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-    /* 全体の配色（黒×金） */
-    .stApp { background-color: #050505; color: #D4AF37; }
-    h1, h2, h3, h4, h5 { font-family: serif !important; color: #D4AF37 !important; }
-    .stDataFrame { border: 1px solid #333; }
-
-    /* --- NUCLEAR STEALTH MODE (徹底消去) --- */
+    /* ベースカラー強制適用 */
+    .stApp { background-color: #050505 !important; color: #D4AF37 !important; }
     
-    /* 1. ハンバーガーメニュー（右上の三本線） */
-    #MainMenu {visibility: hidden; display: none;}
-    
-    /* 2. ヘッダーバー全体 */
-    header {visibility: hidden; display: none;}
-    
-    /* 3. フッター（Made with Streamlit） */
-    footer {visibility: hidden; display: none;}
-    
-    /* 4. 新しいStreamlitのツールバー */
-    [data-testid="stToolbar"] {visibility: hidden; display: none;}
-    
-    /* 5. 上部の装飾バー（レインボーラインなど） */
-    [data-testid="stDecoration"] {visibility: hidden; display: none;}
-    
-    /* 6. 画像拡大時のボタンなど */
-    button[title="View fullscreen"] {visibility: hidden; display: none;}
-    
-    /* 7. ステータスウィジェット（右上のランニングマン） */
-    [data-testid="stStatusWidget"] {visibility: hidden; display: none;}
-
-    /* 8. アプリの管理ボタン（右下） */
-    .stDeployButton {display:none;}
-    
-    /* 余白調整（ヘッダーを消した分詰める） */
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
+    /* ヘッダー・フッター・メニュー・ツールバーを「存在しないもの」として処理 */
+    header, footer, #MainMenu, [data-testid="stToolbar"], [data-testid="stHeader"], [data-testid="stDecoration"], [data-testid="stStatusWidget"] {
+        visibility: hidden !important;
+        display: none !important;
+        height: 0px !important;
+        width: 0px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
     
-    /* リンク色調整 */
+    /* 右下のボタン（Manage app / Fork this app）を強制非表示 */
+    .stDeployButton, div[class*="stDeployButton"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    /* ビューワーバッジ（右上のRunningなど）も消す */
+    .viewerBadge_container__1QSob {
+        display: none !important;
+    }
+
+    /* 上部の余白を完全に削除 */
+    .block-container {
+        padding-top: 0rem !important;
+        padding-bottom: 5rem !important;
+    }
+    
+    /* リンク色 */
     a { color: #D4AF37 !important; text-decoration: none; }
-    a:hover { text-decoration: underline; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -94,6 +79,8 @@ st.markdown("""
 # 3. アプリケーション本体
 # ---------------------------------------------------------
 
+# タイトル（スペースを開ける）
+st.markdown("<br>", unsafe_allow_html=True)
 st.title("聖馬AI")
 st.markdown("##### The Art of Prediction - 究極の競馬予測")
 st.markdown("---")
@@ -116,7 +103,6 @@ if not st.session_state.logged_in:
                 else:
                     st.error("パスワードが違います")
 else:
-    # ログイン後
     df = None
     if os.path.exists('data.csv'):
         df = load_data('data.csv')
@@ -149,7 +135,7 @@ else:
         except Exception as e:
             st.error(f"データ表示エラー: {e}")
     else:
-        st.info("現在、最新の予測データを準備中です。更新をお待ちください。")
+        st.info("現在、最新の予測データを準備中です。")
     
     st.markdown("---")
     if st.button("LOGOUT"):
