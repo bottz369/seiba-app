@@ -18,7 +18,6 @@ def load_data(file_path):
     """GitHub上のデータを読み込む関数"""
     df = None
     encodings = ['utf-8', 'cp932', 'shift_jis']
-    
     for enc in encodings:
         try:
             df = pd.read_csv(file_path, encoding=enc)
@@ -30,47 +29,62 @@ def load_data(file_path):
     return df
 
 # ---------------------------------------------------------
-# 1. ページ設定
+# 1. ページ設定（メニュー自体を無効化する設定を追加）
 # ---------------------------------------------------------
-st.set_page_config(page_title="聖馬AI - SEIBA Premium", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title="聖馬AI - SEIBA Premium",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
+)
 
 # ---------------------------------------------------------
-# 2. デザイン設定（強力な隠蔽設定）
+# 2. デザイン設定（最強の隠蔽CSS）
 # ---------------------------------------------------------
 st.markdown("""
     <style>
     /* 全体の配色（黒×金） */
     .stApp { background-color: #050505; color: #D4AF37; }
-    
-    /* フォント設定 */
     h1, h2, h3, h4, h5 { font-family: serif !important; color: #D4AF37 !important; }
-    
-    /* データテーブルのデザイン */
     .stDataFrame { border: 1px solid #333; }
 
-    /* --- ここから強力な「隠す」設定 --- */
+    /* --- NUCLEAR STEALTH MODE (徹底消去) --- */
     
-    /* 1. ヘッダーバー（右上のメニューなど）を領域ごと完全に消す */
-    header[data-testid="stHeader"] {
-        display: none !important;
+    /* 1. ハンバーガーメニュー（右上の三本線） */
+    #MainMenu {visibility: hidden; display: none;}
+    
+    /* 2. ヘッダーバー全体 */
+    header {visibility: hidden; display: none;}
+    
+    /* 3. フッター（Made with Streamlit） */
+    footer {visibility: hidden; display: none;}
+    
+    /* 4. 新しいStreamlitのツールバー */
+    [data-testid="stToolbar"] {visibility: hidden; display: none;}
+    
+    /* 5. 上部の装飾バー（レインボーラインなど） */
+    [data-testid="stDecoration"] {visibility: hidden; display: none;}
+    
+    /* 6. 画像拡大時のボタンなど */
+    button[title="View fullscreen"] {visibility: hidden; display: none;}
+    
+    /* 7. ステータスウィジェット（右上のランニングマン） */
+    [data-testid="stStatusWidget"] {visibility: hidden; display: none;}
+
+    /* 8. アプリの管理ボタン（右下） */
+    .stDeployButton {display:none;}
+    
+    /* 余白調整（ヘッダーを消した分詰める） */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
     }
     
-    /* 2. フッター（右下のStreamlit/GitHubアイコン）を領域ごと完全に消す */
-    footer[data-testid="stFooter"] {
-        display: none !important;
-    }
-    /* 念の為、古い仕様のクラス名でも非表示指定 */
-    .stFooter {
-        display: none !important;
-    }
-    
-    /* 3. 全体の余白を調整して画面を広く使う */
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 1rem;
-    }
-    
-    /* 4. リンクのホバー時の色なども調整 */
+    /* リンク色調整 */
     a { color: #D4AF37 !important; text-decoration: none; }
     a:hover { text-decoration: underline; }
     </style>
@@ -80,7 +94,6 @@ st.markdown("""
 # 3. アプリケーション本体
 # ---------------------------------------------------------
 
-# タイトル
 st.title("聖馬AI")
 st.markdown("##### The Art of Prediction - 究極の競馬予測")
 st.markdown("---")
@@ -90,7 +103,6 @@ if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
-    # --- ログイン画面 ---
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -104,48 +116,39 @@ if not st.session_state.logged_in:
                 else:
                     st.error("パスワードが違います")
 else:
-    # --- ログイン後のダッシュボード ---
-    
-    # GitHub上の 'data.csv' を読みに行く
+    # ログイン後
     df = None
     if os.path.exists('data.csv'):
         df = load_data('data.csv')
     
     if df is not None:
         try:
-            # 場所の選択
             locations = df['場所'].unique()
             col1, col2 = st.columns(2)
             with col1:
                 selected_location = st.selectbox("開催場所", locations)
             
-            # レースの選択
             df_loc = df[df['場所'] == selected_location]
             races = sorted(df_loc['R'].unique())
             with col2:
                 selected_race = st.selectbox("レース", races, format_func=lambda x: f"{x}R")
             
-            # データ抽出
             df_display = df_loc[df_loc['R'] == selected_race].copy()
             race_name = df_display['レース名'].iloc[0] if 'レース名' in df_display.columns else ""
             
             st.subheader(f"{selected_location} {selected_race}R : {race_name}")
             
-            # 表示する列の制御
             cols = ['AI順位', '印', '枠', '番', '馬名', '騎手', 'AI指数']
             show_cols = [c for c in cols if c in df_display.columns]
             
-            # データの整形
             if '印' in df_display.columns: df_display['印'] = df_display['印'].fillna('')
             if 'AI順位' in df_display.columns: df_display = df_display.sort_values('AI順位')
             
-            # テーブル表示
             st.dataframe(df_display[show_cols], use_container_width=True, hide_index=True)
             
         except Exception as e:
             st.error(f"データ表示エラー: {e}")
     else:
-        # データがない場合の表示
         st.info("現在、最新の予測データを準備中です。更新をお待ちください。")
     
     st.markdown("---")
