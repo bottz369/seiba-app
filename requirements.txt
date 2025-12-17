@@ -1,4 +1,6 @@
 streamlit
 pandas
-watchdog
+joblib
+scikit-learn
 supabase
+watchdog
