@@ -51,30 +51,25 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# 2. Design (CSS & JS Injection) - キーボードブロック最終版
+# 2. Design (CSS & JS Injection)
 # ---------------------------------------------------------
 
-# JavaScript: キーボードの立ち上がりをブロックする
-# CSSだけでは消せない 'readonly' 属性を強制的に付与します。
+# JavaScript: キーボードブロック
 st.markdown("""
 <script>
     function fixSelectKeyboard() {
-        // すべてのセレクトボックス内の入力欄を取得
         const inputElements = document.querySelectorAll('div[data-baseweb="select"] input[type="text"]');
         inputElements.forEach(input => {
-            // ★キーボード表示をブロックする命令★
             input.setAttribute('readonly', 'true'); 
             input.setAttribute('inputmode', 'none'); 
             input.style.cursor = 'default';
         });
     }
-    // ページ読み込み完了後に実行
     window.onload = function() {
         setTimeout(fixSelectKeyboard, 500); 
     };
 </script>
 """, unsafe_allow_html=True)
-
 
 custom_css = """
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:wght@400;500;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
@@ -123,6 +118,23 @@ st.markdown(custom_css, unsafe_allow_html=True)
 col_pad1, col_main, col_pad2 = st.columns([1, 4, 1])
 
 with col_main:
+    # --- ★緊急用：アカウント復旧ボタン（ここから） ---
+    with st.expander("⚠️ アカウント初期化ボタン（ここをクリック）"):
+        st.write("ボタンを押すと、管理者(admin/admin123)と一般(taro/taro123)を作成します。")
+        if st.button("アカウント強制リセット実行"):
+            try:
+                # 既存の同名ユーザーを削除（エラー回避）
+                supabase.table('users').delete().in_('username', ['admin', 'taro']).execute()
+                # 新規作成
+                supabase.table('users').insert([
+                    {"username": "admin", "password": "admin123", "role": "admin", "status": "approved"},
+                    {"username": "taro", "password": "taro123", "role": "member", "status": "approved"}
+                ]).execute()
+                st.success("成功！ admin / admin123 でログインしてください。")
+            except Exception as e:
+                st.error(f"エラー: {e}")
+    # --- ★緊急用：アカウント復旧ボタン（ここまで） ---
+
     st.markdown('<div class="logo-text">HORSEMEN</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-logo">The Art of Prediction</div>', unsafe_allow_html=True)
 
