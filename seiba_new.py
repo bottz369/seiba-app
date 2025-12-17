@@ -1,7 +1,10 @@
+# seiba_new.py
 import streamlit as st
 import pandas as pd
 import os
+import shutil
 from supabase import create_client, Client
+import logic # ★先ほど作った logic.py を読み込みます
 
 # ---------------------------------------------------------
 # 0. System Functions
@@ -106,6 +109,9 @@ custom_css = """
     /* その他設定 */
     .stDataFrame table { border: none !important; }
     .block-container { padding-top: 3rem !important; padding-bottom: 5rem !important; max-width: 1000px !important; }
+    
+    /* 管理者パネルのデザイン */
+    .admin-panel { border: 1px solid #E0C582; padding: 20px; border-radius: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.5); }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -118,23 +124,6 @@ st.markdown(custom_css, unsafe_allow_html=True)
 col_pad1, col_main, col_pad2 = st.columns([1, 4, 1])
 
 with col_main:
-    # --- ★緊急用：アカウント復旧ボタン（ここから） ---
-    with st.expander("⚠️ アカウント初期化ボタン（ここをクリック）"):
-        st.write("ボタンを押すと、管理者(admin/admin123)と一般(taro/taro123)を作成します。")
-        if st.button("アカウント強制リセット実行"):
-            try:
-                # 既存の同名ユーザーを削除（エラー回避）
-                supabase.table('users').delete().in_('username', ['admin', 'taro']).execute()
-                # 新規作成
-                supabase.table('users').insert([
-                    {"username": "admin", "password": "admin123", "role": "admin", "status": "approved"},
-                    {"username": "taro", "password": "taro123", "role": "member", "status": "approved"}
-                ]).execute()
-                st.success("成功！ admin / admin123 でログインしてください。")
-            except Exception as e:
-                st.error(f"エラー: {e}")
-    # --- ★緊急用：アカウント復旧ボタン（ここまで） ---
-
     st.markdown('<div class="logo-text">HORSEMEN</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-logo">The Art of Prediction</div>', unsafe_allow_html=True)
 
@@ -212,9 +201,64 @@ with col_main:
     else:
         user = st.session_state.user
         
-        # --- ADMIN PANEL ---
+        # =========================================================
+        # ★ 管理者機能（ADMIN DASHBOARD）
+        # =========================================================
         if user['role'] == 'admin':
-            with st.expander("ADMIN DASHBOARD (Member Management)", expanded=False):
+            st.markdown("<div class='admin-panel'>", unsafe_allow_html=True)
+            st.write("### 🛠️ Admin Control Center")
+            
+            # タブで機能を分ける
+            adm_tab1, adm_tab2 = st.tabs(["🧠 Prediction Manager", "👥 Member Management"])
+            
+            # --- 1. 予測マネージャー ---
+            with adm_tab1:
+                st.write("##### 1. Select AI Model")
+                
+                # modelsフォルダ内のサブフォルダを列挙
+                models_dir = "models"
+                if not os.path.exists(models_dir):
+                    os.makedirs(models_dir) # なければ作る
+                    
+                model_options = [d for d in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, d))]
+                
+                if not model_options:
+                    st.error(f"❌ '{models_dir}' フォルダ内にモデルフォルダが見つかりません。")
+                else:
+                    selected_model_ver = st.selectbox("使用するモデルバージョン", model_options)
+                    
+                    st.write("##### 2. Upload Race Data (CSV)")
+                    uploaded_file = st.file_uploader("予測用CSVファイル（jra1217.csv等）", type="csv")
+                    
+                    if uploaded_file is not None:
+                        if st.button("🚀 Run Prediction & Update System"):
+                            with st.spinner("AI Brain is thinking..."):
+                                try:
+                                    # アップロードされたファイルを一時的にDataFrameとして読む
+                                    # header=Noneで読む（前回の形式に合わせて）
+                                    try:
+                                        input_df = pd.read_csv(uploaded_file, header=None, encoding='cp932')
+                                    except:
+                                        uploaded_file.seek(0)
+                                        input_df = pd.read_csv(uploaded_file, header=None, encoding='utf-8')
+
+                                    # ロジックファイルに投げて計算させる
+                                    model_path = os.path.join(models_dir, selected_model_ver)
+                                    result_df, error_msg = logic.execute_prediction(input_df, model_path)
+                                    
+                                    if error_msg:
+                                        st.error(f"Error: {error_msg}")
+                                    else:
+                                        # 結果を保存
+                                        result_df.to_csv("data.csv", index=False, encoding='utf-8')
+                                        st.success(f"✅ 予測完了！ 結果を更新しました。 (Model: {selected_model_ver})")
+                                        st.dataframe(result_df.head(3)) # チラ見せ
+
+                                except Exception as e:
+                                    st.error(f"Processing Error: {e}")
+
+            # --- 2. メンバー管理（既存機能）---
+            with adm_tab2:
                 st.write("##### ⚠️ Pending Requests")
                 try:
                     pending_users = supabase.table('users').select("*").eq('status', 'pending').execute().data
@@ -233,7 +277,7 @@ with col_main:
                 except:
                     st.error("Error fetching data.")
                 
-                st.markdown("---")
+                st.divider()
                 
                 st.write("##### 👥 Active Members")
                 try:
@@ -255,8 +299,13 @@ with col_main:
                         st.info("No active members.")
                 except:
                     st.error("Error fetching active members.")
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+            # =========================================================
+            # ★ 管理者機能 終了
+            # =========================================================
 
-        # --- DATA DISPLAY ---
+        # --- DATA DISPLAY (一般ユーザー・管理者共通) ---
         df = None
         if os.path.exists('data.csv'):
             df = load_data('data.csv')
@@ -292,6 +341,7 @@ with col_main:
                         </div>
                     """, unsafe_allow_html=True)
                     
+                    # ★ここでユーザーランクに応じた表示項目の変更ができます（将来的な拡張ポイント）
                     cols = ['AI順位', '印', '枠', '番', '馬名', '騎手', 'AI指数']
                     show_cols = [c for c in cols if c in df_display.columns]
                     
@@ -305,7 +355,7 @@ with col_main:
             except Exception as e:
                 st.error(f"System Error: {e}")
         else:
-            st.info("Awaiting Data Update...")
+            st.info("Currently, there is no race data available. Please wait for the Admin update.")
         
         st.markdown("<br><br>", unsafe_allow_html=True)
         if st.button("LOGOUT"):
